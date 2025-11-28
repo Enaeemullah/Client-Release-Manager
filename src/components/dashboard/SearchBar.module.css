@@ -1,17 +1,18 @@
 .wrapper {
   position: relative;
-  width: min(360px, 100%);
+  width: min(350px, 100%);
 }
 
 .input {
-  padding-left: 2.5rem;
+  padding-left: 2.4rem;
+  border-color: #d9d9d9;
 }
 
 .icon {
   position: absolute;
   top: 50%;
-  left: 1rem;
+  left: 0.85rem;
   transform: translateY(-50%);
   pointer-events: none;
-  color: var(--crm-muted);
+  color: #000;
 }
