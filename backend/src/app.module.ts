@@ -21,7 +21,7 @@ import { ProjectsModule } from './projects/projects.module';
         port: Number(config.get('DATABASE_PORT', 3306)),
         username: config.get<string>('DATABASE_USER', 'root'),
         password: config.get<string>('DATABASE_PASSWORD', ''),
-        database: config.get<string>('DATABASE_NAME', 'client_release_manager'),
+        database: config.get<string>('DATABASE_NAME', 'verto'),
         synchronize: true,
         autoLoadEntities: true,
       }),

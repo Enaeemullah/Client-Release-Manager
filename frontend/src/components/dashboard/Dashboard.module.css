@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: #fff;
+  background: var(--verto-bg);
   padding: 2.5rem 1.5rem 3rem;
 }
 
@@ -13,30 +13,84 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1.25rem;
+  gap: 1.5rem;
   margin-bottom: 2.5rem;
 }
 
 .titleBlock h1 {
-  font-size: 1.75rem;
-  font-weight: 300;
-  margin: 0 0 0.35rem;
+  font-size: 2rem;
+  font-weight: 400;
+  margin: 0 0 0.5rem;
 }
 
 .titleBlock p {
   margin: 0;
-  color: var(--crm-muted);
-  font-size: 0.875rem;
+  color: var(--verto-muted);
+  font-size: 0.95rem;
+  max-width: 520px;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--verto-border);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
 }
 
 .userBlock {
-  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
 }
 
-.userBlock p {
-  margin: 0 0 0.35rem;
-  color: #666;
-  font-size: 0.875rem;
+.avatarButton {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--verto-border);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatarButton img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.userName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.userMeta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--verto-muted);
+}
+
+.userActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .toolbar {
@@ -74,7 +128,8 @@
   }
 
   .userBlock {
-    text-align: left;
+    width: 100%;
+    justify-content: space-between;
   }
 
   .toolbar {
@@ -89,5 +144,13 @@
   .actions button {
     width: 100%;
     justify-content: center;
+  }
+
+  .userActions {
+    width: 100%;
+  }
+
+  .userActions button {
+    flex: 1;
   }
 }

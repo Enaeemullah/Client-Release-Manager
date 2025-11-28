@@ -1,6 +1,6 @@
-# Client Release Manager
+# Verto
 
-A full-stack release tracker built with React + Vite on the frontend and NestJS + MySQL on the backend. Users can sign up, authenticate with JWTs, and manage client/environment release metadata that is persisted entirely in a relational database.
+Verto is a full-stack release tracker built with React + Vite on the frontend and NestJS + MySQL on the backend. Users can sign up, authenticate with JWTs, manage client/environment release metadata, and customize their personal settings (profile, avatar, password) without leaving the workspace.
 
 ## Repo layout
 
@@ -22,7 +22,7 @@ A full-stack release tracker built with React + Vite on the frontend and NestJS 
    cp backend/.env.example backend/.env   # update DB credentials + secrets + SMTP settings for invites
    ```
 
-   Ensure a MySQL database (default `client_release_manager`) exists and the configured user has permissions.
+   Ensure a MySQL database (default `verto`) exists and the configured user has permissions.
 
 3. Run the dev servers (in separate terminals)
 

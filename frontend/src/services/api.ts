@@ -1,13 +1,12 @@
 import { Release, ReleasesData } from '../types/releases';
+import { UserProfile } from '../types/user';
 
 const DEFAULT_API_URL = 'http://localhost:3000';
 const baseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? DEFAULT_API_URL;
 
 interface AuthResponse {
   token: string;
-  user: {
-    email: string;
-  };
+  user: UserProfile;
 }
 
 export interface InviteDetails {
@@ -143,3 +142,39 @@ export const acceptInviteRequest = (tokenValue: string, password?: string) => {
     undefined
   );
 };
+
+export const fetchCurrentUser = (token: string) => request<UserProfile>('/users/me', { method: 'GET' }, token);
+
+export interface UpdateProfilePayload {
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  jobTitle?: string | null;
+  location?: string | null;
+  bio?: string | null;
+  phoneNumber?: string | null;
+}
+
+export const updateProfileRequest = (token: string, payload: UpdateProfilePayload) =>
+  request<UserProfile>(
+    '/users/me',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    },
+    token
+  );
+
+export interface UpdatePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const updatePasswordRequest = (token: string, payload: UpdatePasswordPayload) =>
+  request<UserProfile>(
+    '/users/me/password',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    },
+    token
+  );

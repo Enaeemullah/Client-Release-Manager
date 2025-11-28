@@ -11,6 +11,7 @@ import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { ProjectInvitesService } from '../projects/project-invites.service';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +32,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const user = await this.usersService.create(normalizedEmail, passwordHash);
 
-    return this.buildAuthResponse(user.id, user.email);
+    return this.buildAuthResponse(user);
   }
 
   async login(dto: LoginDto) {
@@ -48,7 +49,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.buildAuthResponse(user.id, user.email);
+    return this.buildAuthResponse(user);
   }
 
   previewInvite(token: string) {
@@ -69,20 +70,18 @@ export class AuthService {
     }
 
     await this.projectInvitesService.consumeInvite(dto.token, user.id);
-    return this.buildAuthResponse(user.id, user.email);
+    return this.buildAuthResponse(user);
   }
 
-  private buildAuthResponse(userId: string, email: string) {
+  private buildAuthResponse(user: User) {
     const token = this.jwtService.sign({
-      sub: userId,
-      email,
+      sub: user.id,
+      email: user.email,
     });
 
     return {
       token,
-      user: {
-        email,
-      },
+      user: this.usersService.toProfile(user),
     };
   }
 }

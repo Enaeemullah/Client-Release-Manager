@@ -9,7 +9,8 @@ import { ReleaseForm } from './ReleaseForm';
 import { ReleaseTable } from './ReleaseTable';
 import { SearchBar } from './SearchBar';
 import { InviteUserForm } from './InviteUserForm';
-import { DownloadIcon, LogoutIcon, PlusIcon } from '../common/icons';
+import { DownloadIcon, LogoutIcon, PlusIcon, SettingsIcon } from '../common/icons';
+import { UserSettingsModal } from './UserSettingsModal';
 
 export const Dashboard = () => {
   const { releases, addRelease, updateRelease, deleteRelease, exportData, inviteUser } = useReleases();
@@ -19,6 +20,7 @@ export const Dashboard = () => {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ReleaseRow | null>(null);
   const [inviteTarget, setInviteTarget] = useState<string | null>(null);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
 
   const rows = useMemo(() => sortReleases(flattenReleases(releases)), [releases]);
   const filteredRows = useMemo(() => filterReleases(rows, searchTerm), [rows, searchTerm]);
@@ -84,19 +86,34 @@ export const Dashboard = () => {
       }
     : null;
 
+  const displayName = currentUser?.displayName ?? currentUser?.email ?? 'Verto user';
+  const avatarInitials = (displayName || 'V').slice(0, 2).toUpperCase();
+
   return (
     <section className={styles.container}>
       <div className={styles.inner}>
         <header className={styles.header}>
           <div className={styles.titleBlock}>
-            <h1>Client Release Manager</h1>
-            <p>Track environments, builds, and deployment cadence with confidence.</p>
+            <p className={styles.badge}>Verto</p>
+            <h1>Releases without the release anxiety.</h1>
+            <p>Track every client environment, unblock product launches, and keep your go-to-market teams aligned.</p>
           </div>
           <div className={styles.userBlock}>
-            <p>{currentUser}</p>
-            <button className="btn" onClick={logout}>
-              <LogoutIcon /> Logout
+            <button className={styles.avatarButton} onClick={() => setSettingsOpen(true)} aria-label="Open settings">
+              {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} alt="" /> : <span>{avatarInitials}</span>}
             </button>
+            <div className={styles.userDetails}>
+              <p className={styles.userName}>{displayName}</p>
+              <p className={styles.userMeta}>{currentUser?.jobTitle || currentUser?.email}</p>
+              <div className={styles.userActions}>
+                <button className="btn btn--ghost" onClick={() => setSettingsOpen(true)}>
+                  <SettingsIcon /> Settings
+                </button>
+                <button className="btn" onClick={logout}>
+                  <LogoutIcon /> Logout
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -153,6 +170,8 @@ export const Dashboard = () => {
           />
         )}
       </Modal>
+
+      <UserSettingsModal isOpen={isSettingsOpen} onClose={() => setSettingsOpen(false)} />
     </section>
   );
 };

@@ -27,7 +27,7 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail({
-        from: this.configService.get<string>('EMAIL_FROM') ?? 'Client Release Manager <no-reply@example.com>',
+        from: this.configService.get<string>('EMAIL_FROM') ?? 'Verto <no-reply@verto.app>',
         to: recipient,
         subject: `You're invited to collaborate on ${template.projectName}`,
         text: this.buildPlainText(template),

@@ -1,24 +1,41 @@
 :root {
-  --crm-bg: #ffffff;
-  --crm-panel: #ffffff;
-  --crm-text: #111111;
-  --crm-muted: #666666;
-  --crm-border: #d9d9d9;
-  --crm-panel-border: #000000;
-  --crm-black: #000000;
-  --crm-radius: 0;
+  --verto-bg: #f8f7f4;
+  --verto-panel: #ffffff;
+  --verto-text: #111111;
+  --verto-muted: #666666;
+  --verto-border: #dcdad3;
+  --verto-panel-border: #111111;
+  --verto-black: #111111;
+  --verto-radius: 0;
 }
 
 * {
   box-sizing: border-box;
 }
 
+#root {
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--crm-bg);
-  color: var(--crm-text);
+  background: var(--verto-bg);
+  color: var(--verto-text);
   min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--verto-bg);
+}
+
+.app-shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 button,
@@ -39,9 +56,9 @@ button {
   border-radius: 0;
   font-size: 0.875rem;
   font-weight: 500;
-  border: 1px solid var(--crm-panel-border);
+  border: 1px solid var(--verto-panel-border);
   background: #fff;
-  color: var(--crm-text);
+  color: var(--verto-text);
   letter-spacing: 0.02em;
 }
 
@@ -50,9 +67,9 @@ button {
 }
 
 .btn--filled {
-  background: var(--crm-black);
+  background: var(--verto-black);
   color: #fff;
-  border-color: var(--crm-black);
+  border-color: var(--verto-black);
 }
 
 .btn--ghost {
@@ -67,7 +84,7 @@ button {
 input,
 select,
 textarea {
-  border: 1px solid var(--crm-border);
+  border: 1px solid var(--verto-border);
   border-radius: 0;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -78,5 +95,5 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--crm-panel-border);
+  border-color: var(--verto-panel-border);
 }

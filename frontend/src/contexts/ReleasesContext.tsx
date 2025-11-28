@@ -114,7 +114,8 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
       return;
     }
 
-    downloadJson(releases, `releases-${currentUser}-${new Date().toISOString().split('T')[0]}.json`);
+    const identifier = currentUser.email.split('@')[0] || 'verto-user';
+    downloadJson(releases, `releases-${identifier}-${new Date().toISOString().split('T')[0]}.json`);
   }, [currentUser, releases]);
 
   const value = useMemo(

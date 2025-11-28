@@ -39,8 +39,10 @@ export const AuthScreen = () => {
   return (
     <section className={styles.wrapper}>
       <div className={styles.panel}>
-        <h1 className={styles.title}>Client Release Manager</h1>
-        <p className={styles.subtitle}>{mode === 'login' ? 'Sign in to your account' : 'Create a new account'}</p>
+        <h1 className={styles.title}>Verto</h1>
+        <p className={styles.subtitle}>
+          {mode === 'login' ? 'Sign in to your release cockpit' : 'Create your Verto workspace'}
+        </p>
 
         {error && <div className={styles.error}>{error}</div>}
 

@@ -1,21 +1,30 @@
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { clearSession, getStoredSession, saveSession } from '../services/userStorage';
 import {
   acceptInviteRequest,
   fetchInviteDetails,
+  fetchCurrentUser,
   loginRequest,
   signupRequest,
+  updatePasswordRequest,
+  updateProfileRequest,
   type InviteDetails,
+  type UpdatePasswordPayload,
+  type UpdateProfilePayload,
 } from '../services/api';
+import { UserProfile } from '../types/user';
 
 interface AuthContextValue {
-  currentUser: string | null;
+  currentUser: UserProfile | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loadInvite: (token: string) => Promise<InviteDetails>;
   acceptInvite: (token: string, password?: string) => Promise<boolean>;
+  refreshProfile: () => Promise<UserProfile | null>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<UserProfile>;
+  updatePassword: (payload: UpdatePasswordPayload) => Promise<UserProfile>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -35,22 +44,21 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [session, setSession] = useState(() => getStoredSession());
-  const [currentUser, setCurrentUser] = useState<string | null>(session?.email ?? null);
-  const [token, setToken] = useState<string | null>(session?.token ?? null);
+  const [initialSession] = useState(() => getStoredSession());
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(initialSession?.user ?? null);
+  const [token, setToken] = useState<string | null>(initialSession?.token ?? null);
 
-  const persistSession = useCallback((nextToken: string, email: string) => {
-    setCurrentUser(email);
+  const persistSession = useCallback((nextToken: string, user: UserProfile) => {
+    setCurrentUser(user);
     setToken(nextToken);
-    setSession({ email, token: nextToken });
-    saveSession(nextToken, email);
+    saveSession(nextToken, user);
   }, []);
 
   const signup = useCallback(
     async (email: string, password: string) => {
       try {
         const response = await signupRequest(email, password);
-        persistSession(response.token, response.user.email);
+        persistSession(response.token, response.user);
         return true;
       } catch (error) {
         console.error(error);
@@ -64,7 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     async (email: string, password: string) => {
       try {
         const response = await loginRequest(email, password);
-        persistSession(response.token, response.user.email);
+        persistSession(response.token, response.user);
         return true;
       } catch (error) {
         console.error(error);
@@ -77,7 +85,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = useCallback(() => {
     setCurrentUser(null);
     setToken(null);
-    setSession(null);
     clearSession();
   }, []);
 
@@ -87,7 +94,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     async (inviteToken: string, password?: string) => {
       try {
         const response = await acceptInviteRequest(inviteToken, password);
-        persistSession(response.token, response.user.email);
+        persistSession(response.token, response.user);
         return true;
       } catch (error) {
         console.error(error);
@@ -96,6 +103,61 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     },
     [persistSession]
   );
+
+  const refreshProfile = useCallback(async () => {
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const profile = await fetchCurrentUser(token);
+      persistSession(token, profile);
+      return profile;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }, [persistSession, token]);
+
+  const updateProfile = useCallback(
+    async (payload: UpdateProfilePayload) => {
+      if (!token) {
+        throw new Error('You must be signed in to update your settings.');
+      }
+
+      const updatedUser = await updateProfileRequest(token, payload);
+      persistSession(token, updatedUser);
+      return updatedUser;
+    },
+    [persistSession, token]
+  );
+
+  const updatePassword = useCallback(
+    async (payload: UpdatePasswordPayload) => {
+      if (!token) {
+        throw new Error('You must be signed in to update your password.');
+      }
+
+      const updatedUser = await updatePasswordRequest(token, payload);
+      persistSession(token, updatedUser);
+      return updatedUser;
+    },
+    [persistSession, token]
+  );
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    refreshProfile().catch((error) => {
+      if (error instanceof Error && error.message.toLowerCase().includes('unauthorized')) {
+        logout();
+      } else {
+        console.warn('Unable to refresh user profile:', error);
+      }
+    });
+  }, [token, refreshProfile, logout]);
 
   const value = useMemo(
     () => ({
@@ -106,8 +168,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       logout,
       loadInvite,
       acceptInvite,
+      refreshProfile,
+      updateProfile,
+      updatePassword,
     }),
-    [acceptInvite, currentUser, loadInvite, login, logout, signup, token]
+    [acceptInvite, currentUser, loadInvite, login, logout, refreshProfile, signup, token, updatePassword, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
