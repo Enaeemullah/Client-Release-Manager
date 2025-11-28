@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
-    "server": "npm --prefix server run start:dev"
+    "server": "npm --prefix ../backend run start:dev"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -2,19 +2,24 @@
 
 A full-stack release tracker built with React + Vite on the frontend and NestJS + MySQL on the backend. Users can sign up, authenticate with JWTs, and manage client/environment release metadata that is persisted entirely in a relational database.
 
+## Repo layout
+
+- `backend/` – NestJS + TypeORM API (JWT auth, releases CRUD, MySQL integration)
+- `frontend/` – React + Vite dashboard (shown below)
+
 ## Getting started
 
 1. Install dependencies
 
    ```bash
-   npm install
-   (cd server && npm install)
+   (cd backend && npm install)
+   (cd frontend && npm install)
    ```
 
 2. Configure environment variables
 
    ```bash
-   cp server/.env.example server/.env   # update DB credentials + secrets
+   cp backend/.env.example backend/.env   # update DB credentials + secrets
    ```
 
    Ensure a MySQL database (default `client_release_manager`) exists and the configured user has permissions.
@@ -22,21 +27,21 @@ A full-stack release tracker built with React + Vite on the frontend and NestJS 
 3. Run the dev servers (in separate terminals)
 
    ```bash
-   npm run server   # starts NestJS backend on http://localhost:3000
-   npm run dev      # starts Vite frontend on http://localhost:5173
+   (cd backend && npm run start:dev)   # http://localhost:3000
+   (cd frontend && npm run dev)        # http://localhost:5173
    ```
 
 4. Optionally build/preview the frontend
 
    ```bash
-   npm run build
-   npm run preview
+   (cd frontend && npm run build)
+   (cd frontend && npm run preview)
    ```
 
 ## Project structure
 
 ```
-src/
+frontend/src/
 ├─ components/
 │  ├─ AppContent.tsx
 │  ├─ auth/
