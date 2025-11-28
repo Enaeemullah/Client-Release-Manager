@@ -7,6 +7,8 @@ export const AuthScreen = () => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,11 +20,26 @@ export const AuthScreen = () => {
       return;
     }
 
-    const action = mode === 'login' ? login : signup;
+    if (mode === 'signup') {
+      if (!firstName.trim() || !lastName.trim()) {
+        setError('Please provide your full name.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      await action(email, password);
+      if (mode === 'login') {
+        await login(email, password);
+      } else {
+        await signup({
+          email,
+          password,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        });
+      }
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to authenticate. Please try again.');
@@ -34,6 +51,8 @@ export const AuthScreen = () => {
   const toggleMode = () => {
     setMode((current) => (current === 'login' ? 'signup' : 'login'));
     setError('');
+    setFirstName('');
+    setLastName('');
   };
 
   return (
@@ -47,6 +66,44 @@ export const AuthScreen = () => {
         {error && <div className={styles.error}>{error}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
+          {mode === 'signup' && (
+            <>
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="firstName">
+                  First name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(event) => {
+                    setFirstName(event.target.value);
+                    setError('');
+                  }}
+                  placeholder="Alex"
+                  autoComplete="given-name"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="lastName">
+                  Last name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(event) => {
+                    setLastName(event.target.value);
+                    setError('');
+                  }}
+                  placeholder="Chen"
+                  autoComplete="family-name"
+                />
+              </div>
+            </>
+          )}
+
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="email">
               Email

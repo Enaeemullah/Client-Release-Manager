@@ -30,7 +30,10 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.usersService.create(normalizedEmail, passwordHash);
+    const user = await this.usersService.create(normalizedEmail, passwordHash, {
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+    });
 
     return this.buildAuthResponse(user);
   }

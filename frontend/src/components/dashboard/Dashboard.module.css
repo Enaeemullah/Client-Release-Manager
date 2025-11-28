@@ -41,10 +41,9 @@
 }
 
 .userBlock {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
-  text-align: left;
+  position: relative;
 }
 
 .avatarButton {
@@ -69,28 +68,66 @@
   object-fit: cover;
 }
 
-.userDetails {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+.userMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 240px;
+  padding: 0.75rem;
+  border: 1px solid var(--verto-border);
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+  z-index: 10;
 }
 
-.userName {
+.userMenuHeader {
+  margin-bottom: 0.5rem;
+}
+
+.userMenuName {
   margin: 0;
-  font-size: 1rem;
   font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--verto-text);
 }
 
-.userMeta {
-  margin: 0;
+.userMenuEmail {
+  margin: 0.15rem 0 0;
   font-size: 0.85rem;
   color: var(--verto-muted);
+  word-break: break-word;
 }
 
-.userActions {
+.userMenuDivider {
+  border: none;
+  border-top: 1px solid var(--verto-border);
+  margin: 0.75rem 0;
+}
+
+.userMenuActions {
   display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.userMenuButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  border: none;
+  background: none;
+  padding: 0.35rem 0;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--verto-text);
+  cursor: pointer;
+}
+
+.userMenuButton svg {
+  width: 16px;
+  height: 16px;
 }
 
 .toolbar {
@@ -146,11 +183,4 @@
     justify-content: center;
   }
 
-  .userActions {
-    width: 100%;
-  }
-
-  .userActions button {
-    flex: 1;
-  }
 }

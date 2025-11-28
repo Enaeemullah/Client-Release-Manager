@@ -9,6 +9,7 @@ import {
   updatePasswordRequest,
   updateProfileRequest,
   type InviteDetails,
+  type SignupPayload,
   type UpdatePasswordPayload,
   type UpdateProfilePayload,
 } from '../services/api';
@@ -18,7 +19,7 @@ interface AuthContextValue {
   currentUser: UserProfile | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string) => Promise<boolean>;
+  signup: (payload: SignupPayload) => Promise<boolean>;
   logout: () => void;
   loadInvite: (token: string) => Promise<InviteDetails>;
   acceptInvite: (token: string, password?: string) => Promise<boolean>;
@@ -55,9 +56,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signup = useCallback(
-    async (email: string, password: string) => {
+    async (payload: SignupPayload) => {
       try {
-        const response = await signupRequest(email, password);
+        const response = await signupRequest(payload);
         persistSession(response.token, response.user);
         return true;
       } catch (error) {

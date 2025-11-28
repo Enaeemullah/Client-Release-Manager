@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './Dashboard.module.css';
 import { useReleases } from '../../contexts/ReleasesContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,6 +21,8 @@ export const Dashboard = () => {
   const [editTarget, setEditTarget] = useState<ReleaseRow | null>(null);
   const [inviteTarget, setInviteTarget] = useState<string | null>(null);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const rows = useMemo(() => sortReleases(flattenReleases(releases)), [releases]);
   const filteredRows = useMemo(() => filterReleases(rows, searchTerm), [rows, searchTerm]);
@@ -86,8 +88,46 @@ export const Dashboard = () => {
       }
     : null;
 
-  const displayName = currentUser?.displayName ?? currentUser?.email ?? 'Verto user';
-  const avatarInitials = (displayName || 'V').slice(0, 2).toUpperCase();
+  const fullName = [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ').trim();
+  const primaryName = fullName || currentUser?.displayName || currentUser?.email || 'Verto user';
+  const avatarInitials = (primaryName || 'V').slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+  const handleSettingsClick = () => {
+    setSettingsOpen(true);
+    closeMenu();
+  };
+
+  const handleLogoutClick = () => {
+    logout();
+    closeMenu();
+  };
 
   return (
     <section className={styles.container}>
@@ -98,22 +138,37 @@ export const Dashboard = () => {
             <h1>Releases without the release anxiety.</h1>
             <p>Track every client environment, unblock product launches, and keep your go-to-market teams aligned.</p>
           </div>
-          <div className={styles.userBlock}>
-            <button className={styles.avatarButton} onClick={() => setSettingsOpen(true)} aria-label="Open settings">
+          <div className={styles.userBlock} ref={menuRef}>
+            <button
+              type="button"
+              className={styles.avatarButton}
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label="Open user menu"
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+            >
               {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} alt="" /> : <span>{avatarInitials}</span>}
             </button>
-            <div className={styles.userDetails}>
-              <p className={styles.userName}>{displayName}</p>
-              <p className={styles.userMeta}>{currentUser?.jobTitle || currentUser?.email}</p>
-              <div className={styles.userActions}>
-                <button className="btn btn--ghost" onClick={() => setSettingsOpen(true)}>
-                  <SettingsIcon /> Settings
-                </button>
-                <button className="btn" onClick={logout}>
-                  <LogoutIcon /> Logout
-                </button>
+
+            {isMenuOpen && (
+              <div className={styles.userMenu} role="menu">
+                <div className={styles.userMenuHeader}>
+                  <p className={styles.userMenuName}>{primaryName}</p>
+                  <p className={styles.userMenuEmail}>{currentUser?.email}</p>
+                </div>
+
+                <hr className={styles.userMenuDivider} />
+
+                <div className={styles.userMenuActions}>
+                  <button type="button" className={styles.userMenuButton} onClick={handleSettingsClick} role="menuitem">
+                    <SettingsIcon /> Settings
+                  </button>
+                  <button type="button" className={styles.userMenuButton} onClick={handleLogoutClick} role="menuitem">
+                    <LogoutIcon /> Logout
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </header>
 
