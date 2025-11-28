@@ -1,0 +1,73 @@
+:root {
+  --crm-bg: #f8fafc;
+  --crm-panel: #ffffff;
+  --crm-text: #0f172a;
+  --crm-muted: #64748b;
+  --crm-border: #e2e8f0;
+  --crm-black: #0b1120;
+  --crm-radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--crm-bg);
+  color: var(--crm-text);
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: 1px solid var(--crm-border);
+  background: #fff;
+  color: var(--crm-text);
+  transition: all 0.2s ease;
+}
+
+.btn svg {
+  pointer-events: none;
+}
+
+.btn--filled {
+  background: var(--crm-black);
+  color: #fff;
+  border-color: var(--crm-black);
+}
+
+.btn--ghost {
+  background: transparent;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input,
+select {
+  border: 1px solid var(--crm-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.95rem;
+  width: 100%;
+}

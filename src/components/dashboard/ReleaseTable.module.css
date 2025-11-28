@@ -1,0 +1,76 @@
+.card {
+  border: 1px solid var(--crm-border);
+  border-radius: var(--crm-radius);
+  background: var(--crm-panel);
+  overflow: hidden;
+}
+
+.cardHeader {
+  background: var(--crm-black);
+  color: #fff;
+  padding: 0.9rem 1.2rem;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.2rem;
+  color: var(--crm-muted);
+  border-bottom: 1px solid var(--crm-border);
+}
+
+td {
+  padding: 0.85rem 1.2rem;
+  border-bottom: 1px solid var(--crm-border);
+  font-size: 0.9rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--crm-border);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge--prod {
+  background: var(--crm-black);
+  color: #fff;
+  border-color: var(--crm-black);
+}
+
+.branch {
+  font-family: 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.iconButton {
+  border: none;
+  background: transparent;
+  padding: 0.35rem;
+  border-radius: 8px;
+  display: inline-flex;
+  color: var(--crm-muted);
+}
+
+.iconButton:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--crm-text);
+}
