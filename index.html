@@ -9,19 +9,38 @@
     <div id="root"></div>
     <script type="module">
       const loadApp = () => import('/src/main.tsx');
+      const SW_CLEANUP_FLAG = '__sw_cleanup_done__';
 
-      if (import.meta.env.DEV && 'serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
-        const cleanupServiceWorkers = async () => {
-          try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-          } catch (error) {
-            console.warn('Failed to clean up service workers', error);
-          } finally {
+      const cleanupServiceWorkers = async () => {
+        if (!navigator.serviceWorker.getRegistrations) {
+          loadApp();
+          return;
+        }
+
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+
+          if (registrations.length === 0) {
+            sessionStorage.removeItem(SW_CLEANUP_FLAG);
             loadApp();
+            return;
           }
-        };
 
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+
+          // Force a single reload so the page is no longer controlled by a stale SW.
+          sessionStorage.setItem(SW_CLEANUP_FLAG, 'true');
+          window.location.reload();
+        } catch (error) {
+          console.warn('Failed to clean up service workers', error);
+          loadApp();
+        }
+      };
+
+      if (sessionStorage.getItem(SW_CLEANUP_FLAG)) {
+        sessionStorage.removeItem(SW_CLEANUP_FLAG);
+        loadApp();
+      } else if (import.meta.env.DEV && 'serviceWorker' in navigator) {
         cleanupServiceWorkers();
       } else {
         loadApp();
