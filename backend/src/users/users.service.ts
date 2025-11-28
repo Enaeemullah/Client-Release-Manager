@@ -120,16 +120,8 @@ export class UsersService {
     };
   }
 
-  private normalizeString(value?: string | null) {
-    if (value === undefined) {
-      return undefined;
-    }
-
-    if (value === null) {
-      return null;
-    }
-
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-  }
+private normalizeString(value?: string | null): string | null {
+  if (!value) return null; // convert undefined to null
+  return value.trim() || null;
+}
 }
