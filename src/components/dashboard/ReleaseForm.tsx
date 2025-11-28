@@ -5,7 +5,7 @@ import { normalizeKey } from '../../utils/releases';
 
 interface ReleaseFormProps {
   initialData?: { client: string; env: string; release: Release };
-  onSubmit: (client: string, env: string, release: Release) => void;
+  onSubmit: (client: string, env: string, release: Release) => Promise<void> | void;
   onCancel: () => void;
 }
 
@@ -18,20 +18,27 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
   const [version, setVersion] = useState(initialData?.release.version ?? '');
   const [build, setBuild] = useState(String(initialData?.release.build ?? 1));
   const [date, setDate] = useState(initialData?.release.date ?? today());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!client || !env || !branch || !version) {
       return;
     }
 
-    onSubmit(normalizeKey(client), normalizeKey(env), {
-      branch,
-      version,
-      build: Number(build) || 1,
-      date,
-    });
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit(normalizeKey(client), normalizeKey(env), {
+        branch,
+        version,
+        build: Number(build) || 1,
+        date,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const disableIdentityFields = Boolean(initialData);
@@ -114,7 +121,7 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
       </div>
 
       <div className={styles.actions}>
-        <button type="submit" className="btn btn--filled">
+        <button type="submit" className="btn btn--filled" disabled={isSubmitting}>
           {initialData ? 'Update Release' : 'Add Release'}
         </button>
         <button type="button" className="btn btn--ghost" onClick={onCancel}>

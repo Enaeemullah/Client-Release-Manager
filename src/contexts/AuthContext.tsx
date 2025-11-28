@@ -1,17 +1,12 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
-import { User } from '../types/releases';
-import {
-  clearCurrentUserId,
-  getAllUsers,
-  getCurrentUserId,
-  saveUsers,
-  setCurrentUserId,
-} from '../services/userStorage';
+import { clearSession, getStoredSession, saveSession } from '../services/userStorage';
+import { loginRequest, signupRequest } from '../services/api';
 
 interface AuthContextValue {
   currentUser: string | null;
-  login: (email: string, password: string) => boolean;
-  signup: (email: string, password: string) => boolean;
+  token: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -32,53 +27,61 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [currentUser, setCurrentUser] = useState<string | null>(() => getCurrentUserId());
+  const [session, setSession] = useState(() => getStoredSession());
+  const [currentUser, setCurrentUser] = useState<string | null>(session?.email ?? null);
+  const [token, setToken] = useState<string | null>(session?.token ?? null);
 
-  const signup = useCallback((email: string, password: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const users = getAllUsers();
-
-    if (users[normalizedEmail]) {
-      return false;
-    }
-
-    const newUser: User = {
-      email: normalizedEmail,
-      password,
-      releases: {},
-    };
-
-    saveUsers({ ...users, [normalizedEmail]: newUser });
-    return true;
+  const persistSession = useCallback((nextToken: string, email: string) => {
+    setCurrentUser(email);
+    setToken(nextToken);
+    setSession({ email, token: nextToken });
+    saveSession(nextToken, email);
   }, []);
 
-  const login = useCallback((email: string, password: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const users = getAllUsers();
-    const user = users[normalizedEmail];
+  const signup = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const response = await signupRequest(email, password);
+        persistSession(response.token, response.user.email);
+        return true;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+    [persistSession]
+  );
 
-    if (user && user.password === password) {
-      setCurrentUser(normalizedEmail);
-      setCurrentUserId(normalizedEmail);
-      return true;
-    }
-
-    return false;
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const response = await loginRequest(email, password);
+        persistSession(response.token, response.user.email);
+        return true;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+    [persistSession]
+  );
 
   const logout = useCallback(() => {
     setCurrentUser(null);
-    clearCurrentUserId();
+    setToken(null);
+    setSession(null);
+    clearSession();
   }, []);
 
   const value = useMemo(
     () => ({
       currentUser,
+      token,
       login,
       signup,
       logout,
     }),
-    [currentUser, login, signup, logout]
+    [currentUser, login, signup, logout, token]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

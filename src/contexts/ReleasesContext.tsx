@@ -1,14 +1,18 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Release, ReleasesData } from '../types/releases';
 import { useAuth } from './AuthContext';
-import { getAllUsers, persistUserReleases } from '../services/userStorage';
 import { downloadJson } from '../utils/download';
+import {
+  deleteRelease as deleteReleaseRequest,
+  fetchReleases,
+  upsertRelease as upsertReleaseRequest,
+} from '../services/api';
 
 interface ReleasesContextValue {
   releases: ReleasesData;
-  addRelease: (client: string, env: string, release: Release) => void;
-  updateRelease: (client: string, env: string, release: Release) => void;
-  deleteRelease: (client: string, env: string) => void;
+  addRelease: (client: string, env: string, release: Release) => Promise<void>;
+  updateRelease: (client: string, env: string, release: Release) => Promise<void>;
+  deleteRelease: (client: string, env: string) => Promise<void>;
   exportData: () => void;
 }
 
@@ -29,71 +33,70 @@ interface ReleasesProviderProps {
 }
 
 export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
-  const { currentUser } = useAuth();
+  const { token, currentUser } = useAuth();
   const [releases, setReleases] = useState<ReleasesData>({});
 
   useEffect(() => {
-    if (!currentUser) {
+    let isMounted = true;
+
+    if (!token) {
       setReleases({});
       return;
     }
 
-    const users = getAllUsers();
-    setReleases(users[currentUser]?.releases ?? {});
-  }, [currentUser]);
-
-  const persist = useCallback(
-    (next: ReleasesData) => {
-      if (!currentUser) {
-        return;
+    const load = async () => {
+      try {
+        const data = await fetchReleases(token);
+        if (isMounted) {
+          setReleases(data);
+        }
+      } catch (error) {
+        console.error(error);
+        if (isMounted) {
+          setReleases({});
+        }
       }
+    };
 
-      setReleases(next);
-      persistUserReleases(currentUser, next);
-    },
-    [currentUser]
-  );
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
+
+  const ensureToken = useCallback(() => {
+    if (!token) {
+      throw new Error('You must be signed in to manage releases.');
+    }
+
+    return token;
+  }, [token]);
 
   const upsertRelease = useCallback(
     (client: string, env: string, release: Release) => {
-      persist({
-        ...releases,
-        [client]: {
-          ...(releases[client] ?? {}),
-          [env]: release,
-        },
-      });
+      const authToken = ensureToken();
+      return upsertReleaseRequest(authToken, client, env, release).then(setReleases);
     },
-    [persist, releases]
+    [ensureToken]
   );
 
-  const addRelease = useCallback((client: string, env: string, release: Release) => {
-    upsertRelease(client, env, release);
-  }, [upsertRelease]);
+  const addRelease = useCallback(
+    (client: string, env: string, release: Release) => upsertRelease(client, env, release),
+    [upsertRelease]
+  );
 
-  const updateRelease = useCallback((client: string, env: string, release: Release) => {
-    upsertRelease(client, env, release);
-  }, [upsertRelease]);
+  const updateRelease = useCallback(
+    (client: string, env: string, release: Release) => upsertRelease(client, env, release),
+    [upsertRelease]
+  );
 
   const deleteRelease = useCallback(
     (client: string, env: string) => {
-      if (!releases[client]) {
-        return;
-      }
-
-      const nextClientReleases = { ...releases[client] };
-      delete nextClientReleases[env];
-
-      const nextState = { ...releases };
-      if (Object.keys(nextClientReleases).length === 0) {
-        delete nextState[client];
-      } else {
-        nextState[client] = nextClientReleases;
-      }
-
-      persist(nextState);
+      const authToken = ensureToken();
+      return deleteReleaseRequest(authToken, client, env).then(setReleases);
     },
-    [persist, releases]
+    [ensureToken]
   );
 
   const exportData = useCallback(() => {

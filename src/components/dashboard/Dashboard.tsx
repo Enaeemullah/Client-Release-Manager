@@ -23,26 +23,40 @@ export const Dashboard = () => {
   const groupedRows = useMemo(() => Array.from(groupByClient(filteredRows).entries()), [filteredRows]);
 
   const handleAdd = useCallback(
-    (client: string, env: string, release: Release) => {
-      addRelease(client, env, release);
-      setCreateModalOpen(false);
+    async (client: string, env: string, release: Release) => {
+      try {
+        await addRelease(client, env, release);
+        setCreateModalOpen(false);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : 'Unable to add release.');
+      }
     },
     [addRelease]
   );
 
   const handleEdit = useCallback(
-    (client: string, env: string, release: Release) => {
-      updateRelease(client, env, release);
-      setEditTarget(null);
+    async (client: string, env: string, release: Release) => {
+      try {
+        await updateRelease(client, env, release);
+        setEditTarget(null);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : 'Unable to update release.');
+      }
     },
     [updateRelease]
   );
 
   const handleDelete = useCallback(
-    (client: string, env: string) => {
+    async (client: string, env: string) => {
       const shouldDelete = window.confirm(`Delete ${client}/${env}?`);
-      if (shouldDelete) {
-        deleteRelease(client, env);
+      if (!shouldDelete) {
+        return;
+      }
+
+      try {
+        await deleteRelease(client, env);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : 'Unable to delete release.');
       }
     },
     [deleteRelease]

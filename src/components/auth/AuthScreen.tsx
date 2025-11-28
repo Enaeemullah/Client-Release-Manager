@@ -8,8 +8,9 @@ export const AuthScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!email || !password) {
@@ -18,18 +19,16 @@ export const AuthScreen = () => {
     }
 
     const action = mode === 'login' ? login : signup;
-    const success = action(email, password);
+    setIsSubmitting(true);
 
-    if (!success) {
-      setError(mode === 'login' ? 'Invalid email or password.' : 'Email already exists.');
-      return;
+    try {
+      await action(email, password);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to authenticate. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (mode === 'signup') {
-      login(email, password);
-    }
-
-    setError('');
   };
 
   const toggleMode = () => {
@@ -80,7 +79,7 @@ export const AuthScreen = () => {
             />
           </div>
 
-          <button type="submit" className={`btn btn--filled ${styles.submitButton}`}>
+          <button type="submit" className={`btn btn--filled ${styles.submitButton}`} disabled={isSubmitting}>
             {mode === 'login' ? 'Sign In' : 'Sign Up'}
           </button>
         </form>

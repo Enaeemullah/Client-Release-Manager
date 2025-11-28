@@ -9,7 +9,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    ignores: ['dist/**', 'node_modules/**', 'server/**'],
   },
   js.configs.recommended,
   {
@@ -37,6 +37,7 @@ export default [
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.configs.recommended.rules,
       'react/prop-types': 'off',
+      'no-undef': 'off',
     },
     settings: {
       react: {
