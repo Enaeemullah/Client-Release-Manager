@@ -1,11 +1,12 @@
 :root {
-  --crm-bg: #f8fafc;
+  --crm-bg: #ffffff;
   --crm-panel: #ffffff;
-  --crm-text: #0f172a;
-  --crm-muted: #64748b;
-  --crm-border: #e2e8f0;
-  --crm-black: #0b1120;
-  --crm-radius: 12px;
+  --crm-text: #111111;
+  --crm-muted: #666666;
+  --crm-border: #d9d9d9;
+  --crm-panel-border: #000000;
+  --crm-black: #000000;
+  --crm-radius: 0;
 }
 
 * {
@@ -33,15 +34,15 @@ button {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 1.2rem;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  gap: 0.35rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
+  font-size: 0.875rem;
   font-weight: 500;
-  border: 1px solid var(--crm-border);
+  border: 1px solid var(--crm-panel-border);
   background: #fff;
   color: var(--crm-text);
-  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
 }
 
 .btn svg {
@@ -64,10 +65,18 @@ button {
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid var(--crm-border);
-  border-radius: 10px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.95rem;
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
   width: 100%;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--crm-panel-border);
 }
