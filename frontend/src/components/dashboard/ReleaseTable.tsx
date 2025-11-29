@@ -1,6 +1,7 @@
 import styles from './ReleaseTable.module.css';
 import { ReleaseRow } from '../../types/releases';
 import { DeleteIcon, EditIcon, ShareIcon } from '../common/icons';
+import { ProjectActivitySummary } from '../../types/projects';
 
 interface ReleaseTableProps {
   client: string;
@@ -8,16 +9,49 @@ interface ReleaseTableProps {
   onEdit: (row: ReleaseRow) => void;
   onDelete: (row: ReleaseRow) => void;
   onInvite: (client: string) => void;
+  onViewActivity: (client: string) => void;
+  activity?: ProjectActivitySummary;
 }
 
-export const ReleaseTable = ({ client, rows, onEdit, onDelete, onInvite }: ReleaseTableProps) => (
+const formatUserName = (user: ProjectActivitySummary['lastUpdatedBy']) => {
+  if (!user) {
+    return 'Someone';
+  }
+
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  return user.displayName || name || user.email || 'Someone';
+};
+
+const formatTimestamp = (isoDate: string) =>
+  new Date(isoDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+const buildActivityText = (summary?: ProjectActivitySummary) => {
+  if (!summary || !summary.lastUpdatedAt) {
+    return 'No updates yet';
+  }
+
+  return `${formatUserName(summary.lastUpdatedBy)} • ${formatTimestamp(summary.lastUpdatedAt)}`;
+};
+
+export const ReleaseTable = ({ client, rows, onEdit, onDelete, onInvite, onViewActivity, activity }: ReleaseTableProps) => (
   <div className={styles.card}>
     <div className={styles.cardHeader}>
-      <span className={styles.cardTitle}>{client}</span>
-      <button className={styles.shareButton} onClick={() => onInvite(client)} aria-label={`Invite collaborators for ${client}`}>
-        <ShareIcon />
-        Share
-      </button>
+      <div className={styles.headerContent}>
+        <span className={styles.cardTitle}>{client}</span>
+        <div className={styles.activitySummary}>
+          <span className={styles.activityLabel}>Last updated</span>
+          <span className={styles.activityValue}>{buildActivityText(activity)}</span>
+        </div>
+      </div>
+      <div className={styles.headerActions}>
+        <button className={styles.shareButton} onClick={() => onInvite(client)} aria-label={`Invite collaborators for ${client}`}>
+          <ShareIcon />
+          Share
+        </button>
+        <button className={styles.activityButton} onClick={() => onViewActivity(client)} aria-label={`View activity for ${client}`}>
+          Activity
+        </button>
+      </div>
     </div>
     <table>
       <thead>

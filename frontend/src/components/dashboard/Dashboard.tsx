@@ -11,9 +11,12 @@ import { SearchBar } from './SearchBar';
 import { InviteUserForm } from './InviteUserForm';
 import { DownloadIcon, LogoutIcon, PlusIcon, SettingsIcon } from '../common/icons';
 import { UserSettingsModal } from './UserSettingsModal';
+import { ProjectActivitySummary } from '../../types/projects';
+import { ProjectActivityList } from './ProjectActivityList';
 
 export const Dashboard = () => {
-  const { releases, addRelease, updateRelease, deleteRelease, exportData, inviteUser } = useReleases();
+  const { releases, activity, addRelease, updateRelease, deleteRelease, exportData, inviteUser, getProjectActivity } =
+    useReleases();
   const { currentUser, logout } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +26,10 @@ export const Dashboard = () => {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [activityModalClient, setActivityModalClient] = useState<string | null>(null);
+  const [activityModalData, setActivityModalData] = useState<ProjectActivitySummary | null>(null);
+  const [activityError, setActivityError] = useState<string | null>(null);
+  const [isActivityLoading, setActivityLoading] = useState(false);
 
   const rows = useMemo(() => sortReleases(flattenReleases(releases)), [releases]);
   const filteredRows = useMemo(() => filterReleases(rows, searchTerm), [rows, searchTerm]);
@@ -74,6 +81,34 @@ export const Dashboard = () => {
     },
     [inviteUser]
   );
+
+  const handleViewActivity = useCallback(
+    async (client: string) => {
+      setActivityModalClient(client);
+      setActivityError(null);
+      setActivityModalData(activity[client] ?? null);
+      setActivityLoading(true);
+
+      try {
+        const details = await getProjectActivity(client);
+        setActivityModalData(details);
+      } catch (error) {
+        console.error(error);
+        setActivityModalData(null);
+        setActivityError(error instanceof Error ? error.message : 'Unable to load project activity.');
+      } finally {
+        setActivityLoading(false);
+      }
+    },
+    [activity, getProjectActivity],
+  );
+
+  const closeActivityModal = () => {
+    setActivityModalClient(null);
+    setActivityModalData(null);
+    setActivityError(null);
+    setActivityLoading(false);
+  };
 
   const activeEditData = editTarget
     ? {
@@ -193,6 +228,8 @@ export const Dashboard = () => {
               onEdit={(row) => setEditTarget(row)}
               onDelete={(row) => handleDelete(row.client, row.env)}
               onInvite={(targetClient) => setInviteTarget(targetClient)}
+              activity={activity[client]}
+              onViewActivity={handleViewActivity}
             />
           ))}
         </div>
@@ -227,6 +264,21 @@ export const Dashboard = () => {
       </Modal>
 
       <UserSettingsModal isOpen={isSettingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      <Modal
+        title={activityModalClient ? `Activity for ${activityModalClient}` : 'Project activity'}
+        isOpen={Boolean(activityModalClient)}
+        onClose={closeActivityModal}
+      >
+        <div className={styles.activityModalContent}>
+          {activityError && <p className={styles.activityError}>{activityError}</p>}
+          {activityModalData && <ProjectActivityList summary={activityModalData} />}
+          {isActivityLoading && <p className={styles.activityLoading}>Loading activity…</p>}
+          {!isActivityLoading && !activityModalData && !activityError && (
+            <p className={styles.activityLoading}>No activity has been recorded yet.</p>
+          )}
+        </div>
+      </Modal>
     </section>
   );
 };

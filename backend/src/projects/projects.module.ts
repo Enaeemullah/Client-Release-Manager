@@ -8,10 +8,11 @@ import { ProjectInvitesService } from './project-invites.service';
 import { ProjectsController } from './projects.controller';
 import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email.module';
+import { ProjectActivityLog } from './project-activity-log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Project, ProjectMember, ProjectInvite]),
+    TypeOrmModule.forFeature([Project, ProjectMember, ProjectInvite, ProjectActivityLog]),
     UsersModule,
     EmailModule,
   ],

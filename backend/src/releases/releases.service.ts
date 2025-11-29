@@ -69,6 +69,14 @@ export class ReleasesService {
     }
 
     await this.releasesRepository.save(release);
+    await this.projectsService.recordActivity(project.id, userId, 'release_upserted', {
+      environment,
+      releaseId: release.id,
+      branch: release.branch,
+      version: release.version,
+      build: release.build,
+      date: release.date,
+    });
     return this.getReleasesForUser(userId);
   }
 
@@ -94,7 +102,17 @@ export class ReleasesService {
       throw new NotFoundException('Release not found');
     }
 
+    const metadata = {
+      environment,
+      releaseId: release.id,
+      branch: release.branch,
+      version: release.version,
+      build: release.build,
+      date: release.date,
+    };
+
     await this.releasesRepository.remove(release);
+    await this.projectsService.recordActivity(project.id, userId, 'release_deleted', metadata);
     return this.getReleasesForUser(userId);
   }
 

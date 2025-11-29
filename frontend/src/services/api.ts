@@ -1,5 +1,6 @@
 import { Release, ReleasesData } from '../types/releases';
 import { UserProfile } from '../types/user';
+import { ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
 
 const DEFAULT_API_URL = 'http://localhost:3000';
 const baseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? DEFAULT_API_URL;
@@ -187,3 +188,9 @@ export const updatePasswordRequest = (token: string, payload: UpdatePasswordPayl
     },
     token
   );
+
+export const fetchProjectActivitySummaries = (token: string) =>
+  request<ProjectActivityMap>('/projects/activity', { method: 'GET' }, token);
+
+export const fetchProjectActivityDetail = (token: string, client: string) =>
+  request<ProjectActivitySummary>(`/projects/${encodeURIComponent(client)}/activity`, { method: 'GET' }, token);

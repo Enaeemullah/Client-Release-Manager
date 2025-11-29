@@ -1,9 +1,38 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { normalizeKey } from '../shared/normalize-key';
 import { Project } from './project.entity';
 import { ProjectMember, ProjectRole } from './project-member.entity';
+import { ProjectActivityAction, ProjectActivityLog } from './project-activity-log.entity';
+import { User } from '../users/user.entity';
+
+const DEFAULT_LOG_LIMIT = 10;
+
+export interface ProjectActivityUserDto {
+  id: string;
+  email: string;
+  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+export interface ProjectActivityLogDto {
+  id: string;
+  action: ProjectActivityAction;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
+  user: ProjectActivityUserDto | null;
+}
+
+export interface ProjectActivitySummaryDto {
+  projectId: string;
+  name: string;
+  slug: string;
+  lastUpdatedAt: string | null;
+  lastUpdatedBy: ProjectActivityUserDto | null;
+  recentLogs: ProjectActivityLogDto[];
+}
 
 @Injectable()
 export class ProjectsService {
@@ -12,6 +41,8 @@ export class ProjectsService {
     private readonly projectsRepository: Repository<Project>,
     @InjectRepository(ProjectMember)
     private readonly membersRepository: Repository<ProjectMember>,
+    @InjectRepository(ProjectActivityLog)
+    private readonly activityRepository: Repository<ProjectActivityLog>,
   ) {}
 
   async getAccessibleProjectIds(userId: string): Promise<string[]> {
@@ -74,6 +105,9 @@ export class ProjectsService {
 
     const saved = await this.projectsRepository.save(project);
     await this.ensureMembership(saved.id, userId, 'owner');
+    await this.recordActivity(saved.id, userId, 'project_created', {
+      name: saved.name,
+    });
     return saved;
   }
 
@@ -119,5 +153,125 @@ export class ProjectsService {
     });
 
     return Boolean(membership);
+  }
+
+  async recordActivity(
+    projectId: string,
+    userId: string | null,
+    action: ProjectActivityAction,
+    metadata?: Record<string, unknown>,
+  ) {
+    const log = this.activityRepository.create({
+      projectId,
+      userId: userId ?? null,
+      action,
+      metadata: metadata ?? null,
+    });
+
+    await this.activityRepository.save(log);
+    await this.projectsRepository.update(projectId, {
+      lastUpdatedById: userId ?? null,
+      lastActivityAt: new Date(),
+    });
+  }
+
+  async getActivitySummaries(
+    userId: string,
+    options?: { logLimit?: number },
+  ): Promise<Record<string, ProjectActivitySummaryDto>> {
+    const projectIds = await this.getAccessibleProjectIds(userId);
+    if (projectIds.length === 0) {
+      return {};
+    }
+
+    const logLimit = options?.logLimit ?? DEFAULT_LOG_LIMIT;
+
+    const projects = await this.projectsRepository.find({
+      where: { id: In(projectIds) },
+      relations: { lastUpdatedBy: true },
+    });
+
+    const entries = await Promise.all(
+      projects.map(async (project) => {
+        const logs = await this.activityRepository.find({
+          where: { projectId: project.id },
+          order: { createdAt: 'DESC' },
+          take: logLimit,
+          relations: { user: true },
+        });
+
+        return [project.slug, this.buildActivitySummary(project, logs)] as const;
+      }),
+    );
+
+    return entries.reduce<Record<string, ProjectActivitySummaryDto>>((acc, [slug, summary]) => {
+      acc[slug] = summary;
+      return acc;
+    }, {});
+  }
+
+  async getProjectActivity(
+    userId: string,
+    client: string,
+    options?: { logLimit?: number },
+  ): Promise<ProjectActivitySummaryDto> {
+    const project = await this.findAccessibleProjectBySlug(userId, client);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const fullProject = await this.projectsRepository.findOne({
+      where: { id: project.id },
+      relations: { lastUpdatedBy: true },
+    });
+
+    if (!fullProject) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const logs = await this.activityRepository.find({
+      where: { projectId: project.id },
+      order: { createdAt: 'DESC' },
+      take: options?.logLimit ?? 50,
+      relations: { user: true },
+    });
+
+    return this.buildActivitySummary(fullProject, logs);
+  }
+
+  private buildActivitySummary(project: Project, logs: ProjectActivityLog[]): ProjectActivitySummaryDto {
+    return {
+      projectId: project.id,
+      name: project.name,
+      slug: project.slug,
+      lastUpdatedAt: project.lastActivityAt ? project.lastActivityAt.toISOString() : null,
+      lastUpdatedBy: this.toActivityUser(project.lastUpdatedBy ?? null),
+      recentLogs: logs.map((log) => this.toActivityLogDto(log)),
+    };
+  }
+
+  private toActivityLogDto(log: ProjectActivityLog): ProjectActivityLogDto {
+    return {
+      id: log.id,
+      action: log.action,
+      createdAt: log.createdAt.toISOString(),
+      metadata: log.metadata ?? null,
+      user: this.toActivityUser(log.user ?? null),
+    };
+  }
+
+  private toActivityUser(user: User | null): ProjectActivityUserDto | null {
+    if (!user) {
+      return null;
+    }
+
+    const { id, email, displayName, firstName, lastName } = user;
+    return {
+      id,
+      email,
+      displayName: displayName ?? null,
+      firstName: firstName ?? null,
+      lastName: lastName ?? null,
+    };
   }
 }

@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Project } from '../projects/project.entity';
 import { ProjectMember } from '../projects/project-member.entity';
+import { ProjectActivityLog } from '../projects/project-activity-log.entity';
 
 @Entity('users')
 export class User {
@@ -48,4 +49,7 @@ export class User {
 
   @OneToMany(() => ProjectMember, (member) => member.user)
   projectMemberships: ProjectMember[];
+
+  @OneToMany(() => ProjectActivityLog, (log) => log.user)
+  projectActivityLogs: ProjectActivityLog[];
 }

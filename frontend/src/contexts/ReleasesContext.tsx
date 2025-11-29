@@ -5,17 +5,23 @@ import { downloadJson } from '../utils/download';
 import {
   deleteRelease as deleteReleaseRequest,
   fetchReleases,
+  fetchProjectActivityDetail,
+  fetchProjectActivitySummaries,
   sendProjectInvite,
   upsertRelease as upsertReleaseRequest,
 } from '../services/api';
+import { ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
 
 interface ReleasesContextValue {
   releases: ReleasesData;
+  activity: ProjectActivityMap;
   addRelease: (client: string, env: string, release: Release) => Promise<void>;
   updateRelease: (client: string, env: string, release: Release) => Promise<void>;
   deleteRelease: (client: string, env: string) => Promise<void>;
   exportData: () => void;
   inviteUser: (client: string, email: string) => Promise<void>;
+  refreshActivity: () => Promise<ProjectActivityMap>;
+  getProjectActivity: (client: string) => Promise<ProjectActivitySummary>;
 }
 
 const ReleasesContext = createContext<ReleasesContextValue | undefined>(undefined);
@@ -37,25 +43,29 @@ interface ReleasesProviderProps {
 export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
   const { token, currentUser } = useAuth();
   const [releases, setReleases] = useState<ReleasesData>({});
+  const [activity, setActivity] = useState<ProjectActivityMap>({});
 
   useEffect(() => {
     let isMounted = true;
 
     if (!token) {
       setReleases({});
+      setActivity({});
       return;
     }
 
     const load = async () => {
       try {
-        const data = await fetchReleases(token);
+        const [releaseData, activityData] = await Promise.all([fetchReleases(token), fetchProjectActivitySummaries(token)]);
         if (isMounted) {
-          setReleases(data);
+          setReleases(releaseData);
+          setActivity(activityData);
         }
       } catch (error) {
         console.error(error);
         if (isMounted) {
           setReleases({});
+          setActivity({});
         }
       }
     };
@@ -75,12 +85,29 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
     return token;
   }, [token]);
 
-  const upsertRelease = useCallback(
-    (client: string, env: string, release: Release) => {
+  const refreshActivity = useCallback(async () => {
+    const authToken = ensureToken();
+    const activityData = await fetchProjectActivitySummaries(authToken);
+    setActivity(activityData);
+    return activityData;
+  }, [ensureToken]);
+
+  const getProjectActivity = useCallback(
+    (client: string) => {
       const authToken = ensureToken();
-      return upsertReleaseRequest(authToken, client, env, release).then(setReleases);
+      return fetchProjectActivityDetail(authToken, client);
     },
-    [ensureToken]
+    [ensureToken],
+  );
+
+  const upsertRelease = useCallback(
+    async (client: string, env: string, release: Release) => {
+      const authToken = ensureToken();
+      const data = await upsertReleaseRequest(authToken, client, env, release);
+      setReleases(data);
+      await refreshActivity();
+    },
+    [ensureToken, refreshActivity],
   );
 
   const addRelease = useCallback(
@@ -94,11 +121,13 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
   );
 
   const deleteRelease = useCallback(
-    (client: string, env: string) => {
+    async (client: string, env: string) => {
       const authToken = ensureToken();
-      return deleteReleaseRequest(authToken, client, env).then(setReleases);
+      const data = await deleteReleaseRequest(authToken, client, env);
+      setReleases(data);
+      await refreshActivity();
     },
-    [ensureToken]
+    [ensureToken, refreshActivity],
   );
 
   const inviteUser = useCallback(
@@ -121,13 +150,16 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
   const value = useMemo(
     () => ({
       releases,
+      activity,
       addRelease,
       updateRelease,
       deleteRelease,
       exportData,
       inviteUser,
+      refreshActivity,
+      getProjectActivity,
     }),
-    [addRelease, deleteRelease, exportData, inviteUser, releases, updateRelease]
+    [activity, addRelease, deleteRelease, exportData, getProjectActivity, inviteUser, refreshActivity, releases, updateRelease],
   );
 
   return <ReleasesContext.Provider value={value}>{children}</ReleasesContext.Provider>;
