@@ -24,3 +24,15 @@ export interface ProjectActivitySummary {
 }
 
 export type ProjectActivityMap = Record<string, ProjectActivitySummary>;
+
+export interface PendingProjectInvite {
+  id: string;
+  email: string;
+  expiresAt: string;
+  project: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  invitedBy: ActivityUser | null;
+}

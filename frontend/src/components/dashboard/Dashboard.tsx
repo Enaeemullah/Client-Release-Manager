@@ -11,13 +11,28 @@ import { SearchBar } from './SearchBar';
 import { InviteUserForm } from './InviteUserForm';
 import { DownloadIcon, LogoutIcon, PlusIcon, SettingsIcon } from '../common/icons';
 import { UserSettingsModal } from './UserSettingsModal';
-import { ProjectActivitySummary } from '../../types/projects';
+import { PendingProjectInvite, ProjectActivitySummary } from '../../types/projects';
 import { ProjectActivityList } from './ProjectActivityList';
+import { PendingInvitesPanel } from './PendingInvitesPanel';
+import {
+  acceptPendingInviteRequest,
+  fetchPendingInvites,
+  rejectPendingInviteRequest,
+} from '../../services/api';
 
 export const Dashboard = () => {
-  const { releases, activity, addRelease, updateRelease, deleteRelease, exportData, inviteUser, getProjectActivity } =
-    useReleases();
-  const { currentUser, logout } = useAuth();
+  const {
+    releases,
+    activity,
+    addRelease,
+    updateRelease,
+    deleteRelease,
+    exportData,
+    inviteUser,
+    getProjectActivity,
+    reloadWorkspace,
+  } = useReleases();
+  const { currentUser, logout, token } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -30,6 +45,77 @@ export const Dashboard = () => {
   const [activityModalData, setActivityModalData] = useState<ProjectActivitySummary | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [isActivityLoading, setActivityLoading] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<PendingProjectInvite[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [invitesError, setInvitesError] = useState<string | null>(null);
+  const [inviteAction, setInviteAction] = useState<{ id: string; action: 'accept' | 'reject' } | null>(null);
+  const loadPendingInvites = useCallback(async () => {
+    if (!token) {
+      setPendingInvites([]);
+      setInvitesLoading(false);
+      setInvitesError(null);
+      return;
+    }
+
+    setInvitesLoading(true);
+    setInvitesError(null);
+
+    try {
+      const invites = await fetchPendingInvites(token);
+      setPendingInvites(invites);
+    } catch (error) {
+      console.error(error);
+      setInvitesError(error instanceof Error ? error.message : 'Unable to load invitations.');
+    } finally {
+      setInvitesLoading(false);
+    }
+  }, [token]);
+
+  const handleAcceptInvite = useCallback(
+    async (inviteId: string) => {
+      if (!token) {
+        window.alert('Please sign in to accept invitations.');
+        return;
+      }
+
+      setInviteAction({ id: inviteId, action: 'accept' });
+
+      try {
+        await acceptPendingInviteRequest(token, inviteId);
+        await reloadWorkspace();
+        await loadPendingInvites();
+      } catch (error) {
+        console.error(error);
+        window.alert(error instanceof Error ? error.message : 'Unable to accept invite.');
+      } finally {
+        setInviteAction(null);
+      }
+    },
+    [token, reloadWorkspace, loadPendingInvites],
+  );
+
+  const handleRejectInvite = useCallback(
+    async (inviteId: string) => {
+      if (!token) {
+        window.alert('Please sign in to reject invitations.');
+        return;
+      }
+
+      setInviteAction({ id: inviteId, action: 'reject' });
+
+      try {
+        await rejectPendingInviteRequest(token, inviteId);
+        await loadPendingInvites();
+      } catch (error) {
+        console.error(error);
+        window.alert(error instanceof Error ? error.message : 'Unable to reject invite.');
+      } finally {
+        setInviteAction(null);
+      }
+    },
+    [token, loadPendingInvites],
+  );
+
 
   const rows = useMemo(() => sortReleases(flattenReleases(releases)), [releases]);
   const filteredRows = useMemo(() => filterReleases(rows, searchTerm), [rows, searchTerm]);
@@ -129,6 +215,10 @@ export const Dashboard = () => {
   const avatarInitials = (primaryName || 'V').slice(0, 2).toUpperCase();
 
   useEffect(() => {
+    loadPendingInvites();
+  }, [loadPendingInvites]);
+
+  useEffect(() => {
     if (!isMenuOpen) {
       return;
     }
@@ -219,6 +309,18 @@ export const Dashboard = () => {
             </button>
           </div>
         </div>
+
+        <PendingInvitesPanel
+          invites={pendingInvites}
+          isLoading={invitesLoading}
+          error={invitesError}
+          onRefresh={() => {
+            void loadPendingInvites();
+          }}
+          onAccept={handleAcceptInvite}
+          onReject={handleRejectInvite}
+          actionState={inviteAction}
+        />
 
         <div className={styles.cardGrid}>
           {groupedRows.map(([client, clientRows]) => (
