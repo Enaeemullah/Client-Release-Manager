@@ -23,6 +23,21 @@ export class ProjectsController {
     return this.projectInvitesService.createInvite(user.sub, client, dto.email);
   }
 
+  @Get('invitations')
+  listPendingInvites(@CurrentUser() user: JwtPayload) {
+    return this.projectInvitesService.getPendingInvitesForUser(user.sub);
+  }
+
+  @Post('invitations/:inviteId/accept')
+  acceptPendingInvite(@CurrentUser() user: JwtPayload, @Param('inviteId') inviteId: string) {
+    return this.projectInvitesService.acceptInviteForUser(inviteId, user.sub);
+  }
+
+  @Post('invitations/:inviteId/reject')
+  rejectPendingInvite(@CurrentUser() user: JwtPayload, @Param('inviteId') inviteId: string) {
+    return this.projectInvitesService.rejectInviteForUser(inviteId, user.sub);
+  }
+
   @Get('activity')
   listActivity(@CurrentUser() user: JwtPayload) {
     return this.projectsService.getActivitySummaries(user.sub);

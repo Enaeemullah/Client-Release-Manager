@@ -1,6 +1,6 @@
 import { Release, ReleasesData } from '../types/releases';
 import { UserProfile } from '../types/user';
-import { ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
+import { PendingProjectInvite, ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
 
 const DEFAULT_API_URL = 'http://localhost:3000';
 const baseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? DEFAULT_API_URL;
@@ -130,6 +130,15 @@ export const sendProjectInvite = (token: string, client: string, email: string) 
     },
     token
   );
+
+export const fetchPendingInvites = (token: string) =>
+  request<PendingProjectInvite[]>('/projects/invitations', { method: 'GET' }, token);
+
+export const acceptPendingInviteRequest = (token: string, inviteId: string) =>
+  request<void>(`/projects/invitations/${encodeURIComponent(inviteId)}/accept`, { method: 'POST' }, token);
+
+export const rejectPendingInviteRequest = (token: string, inviteId: string) =>
+  request<void>(`/projects/invitations/${encodeURIComponent(inviteId)}/reject`, { method: 'POST' }, token);
 
 export const fetchInviteDetails = (token: string) =>
   request<InviteDetails>(`/auth/invitations/${encodeURIComponent(token)}`, { method: 'GET' });

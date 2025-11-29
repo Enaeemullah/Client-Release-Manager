@@ -23,6 +23,7 @@ interface ReleasesContextValue {
   inviteUser: (client: string, email: string) => Promise<void>;
   refreshActivity: () => Promise<ProjectActivityMap>;
   getProjectActivity: (client: string) => Promise<ProjectActivitySummary>;
+  reloadWorkspace: () => Promise<void>;
 }
 
 const ReleasesContext = createContext<ReleasesContextValue | undefined>(undefined);
@@ -46,6 +47,20 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
   const [releases, setReleases] = useState<ReleasesData>({});
   const [activity, setActivity] = useState<ProjectActivityMap>({});
 
+  const ensureToken = useCallback(() => {
+    if (!token) {
+      throw new Error('You must be signed in to manage releases.');
+    }
+
+    return token;
+  }, [token]);
+
+  const loadWorkspaceData = useCallback(async () => {
+    const authToken = ensureToken();
+    const [releaseData, activityData] = await Promise.all([fetchReleases(authToken), fetchProjectActivitySummaries(authToken)]);
+    return { releaseData, activityData };
+  }, [ensureToken]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -55,36 +70,26 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
       return;
     }
 
-    const load = async () => {
-      try {
-        const [releaseData, activityData] = await Promise.all([fetchReleases(token), fetchProjectActivitySummaries(token)]);
-        if (isMounted) {
-          setReleases(releaseData);
-          setActivity(activityData);
+    loadWorkspaceData()
+      .then(({ releaseData, activityData }) => {
+        if (!isMounted) {
+          return;
         }
-      } catch (error) {
+        setReleases(releaseData);
+        setActivity(activityData);
+      })
+      .catch((error) => {
         console.error(error);
         if (isMounted) {
           setReleases({});
           setActivity({});
         }
-      }
-    };
-
-    load();
+      });
 
     return () => {
       isMounted = false;
     };
-  }, [token]);
-
-  const ensureToken = useCallback(() => {
-    if (!token) {
-      throw new Error('You must be signed in to manage releases.');
-    }
-
-    return token;
-  }, [token]);
+  }, [token, loadWorkspaceData]);
 
   const refreshActivity = useCallback(async () => {
     const authToken = ensureToken();
@@ -168,6 +173,12 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
     );
   }, [currentUser, releases]);
 
+  const reloadWorkspace = useCallback(async () => {
+    const { releaseData, activityData } = await loadWorkspaceData();
+    setReleases(releaseData);
+    setActivity(activityData);
+  }, [loadWorkspaceData]);
+
   const value = useMemo(
     () => ({
       releases,
@@ -179,8 +190,20 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
       inviteUser,
       refreshActivity,
       getProjectActivity,
+      reloadWorkspace,
     }),
-    [activity, addRelease, deleteRelease, exportData, getProjectActivity, inviteUser, refreshActivity, releases, updateRelease],
+    [
+      activity,
+      addRelease,
+      deleteRelease,
+      exportData,
+      getProjectActivity,
+      inviteUser,
+      refreshActivity,
+      reloadWorkspace,
+      releases,
+      updateRelease,
+    ],
   );
 
   return <ReleasesContext.Provider value={value}>{children}</ReleasesContext.Provider>;

@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
-import { Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import { normalizeKey } from '../shared/normalize-key';
 import { ProjectInvite } from './project-invite.entity';
 import { ProjectsService } from './projects.service';
@@ -107,6 +107,44 @@ export class ProjectInvitesService {
     return invite;
   }
 
+  async getPendingInvitesForUser(userId: string) {
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const invites = await this.invitesRepository.find({
+      where: {
+        email: user.email,
+        acceptedAt: IsNull(),
+        expiresAt: MoreThan(new Date()),
+      },
+      relations: {
+        project: true,
+        invitedBy: true,
+      },
+      order: {
+        expiresAt: 'ASC',
+      },
+    });
+
+    return invites.map((invite) => this.toPendingInvite(invite));
+  }
+
+  async acceptInviteForUser(inviteId: string, userId: string) {
+    const invite = await this.findInviteForUser(inviteId, userId);
+    await this.projectsService.ensureMembership(invite.projectId, userId);
+    await this.invitesRepository.remove(invite);
+    return { success: true };
+  }
+
+  async rejectInviteForUser(inviteId: string, userId: string) {
+    const invite = await this.findInviteForUser(inviteId, userId);
+    await this.invitesRepository.remove(invite);
+    return { success: true };
+  }
+
   private async findActiveInvite(token: string) {
     const normalizedToken = token.trim();
     const invite = await this.invitesRepository.findOne({
@@ -127,6 +165,55 @@ export class ProjectInvitesService {
     }
 
     return invite;
+  }
+
+  private async findInviteForUser(inviteId: string, userId: string) {
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const invite = await this.invitesRepository.findOne({
+      where: {
+        id: inviteId,
+        email: user.email,
+      },
+      relations: ['project', 'invitedBy', 'project.owner'],
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Invite not found');
+    }
+
+    if (invite.expiresAt.getTime() < Date.now()) {
+      await this.invitesRepository.remove(invite);
+      throw new BadRequestException('Invite expired');
+    }
+
+    return invite;
+  }
+
+  private toPendingInvite(invite: ProjectInvite) {
+    return {
+      id: invite.id,
+      email: invite.email,
+      expiresAt: invite.expiresAt.toISOString(),
+      project: {
+        id: invite.project.id,
+        name: invite.project.name,
+        slug: invite.project.slug,
+      },
+      invitedBy: invite.invitedBy
+        ? {
+            id: invite.invitedBy.id,
+            email: invite.invitedBy.email,
+            displayName: invite.invitedBy.displayName ?? null,
+            firstName: invite.invitedBy.firstName ?? null,
+            lastName: invite.invitedBy.lastName ?? null,
+          }
+        : null,
+    };
   }
 
   private buildExpiryDate() {
