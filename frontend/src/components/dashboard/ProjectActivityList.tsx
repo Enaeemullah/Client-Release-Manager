@@ -5,10 +5,80 @@ interface ProjectActivityListProps {
   summary: ProjectActivitySummary;
 }
 
+type ReleaseChangeEntry = {
+  field: string;
+  previous: string | number | null;
+  current: string | number | null;
+};
+
 const formatTimestamp = (isoDate: string) =>
   new Date(isoDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 const truncate = (value: string, limit = 80) => (value.length > limit ? `${value.slice(0, limit - 1)}…` : value);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const getMetadataString = (metadata: Record<string, unknown> | null | undefined, key: string) => {
+  if (!isRecord(metadata)) {
+    return null;
+  }
+
+  const value = metadata[key];
+  return typeof value === 'string' ? value : null;
+};
+
+const getMetadataBoolean = (metadata: Record<string, unknown> | null | undefined, key: string) => {
+  if (!isRecord(metadata)) {
+    return false;
+  }
+
+  const value = metadata[key];
+  return typeof value === 'boolean' ? value : false;
+};
+
+const toChangeValue = (value: unknown): string | number | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  return null;
+};
+
+const getReleaseChanges = (metadata: Record<string, unknown> | null | undefined): ReleaseChangeEntry[] => {
+  if (!isRecord(metadata)) {
+    return [];
+  }
+
+  const rawChanges = metadata['changes'];
+  if (!Array.isArray(rawChanges)) {
+    return [];
+  }
+
+  return rawChanges
+    .map((entry) => {
+      if (!isRecord(entry)) {
+        return null;
+      }
+
+      const fieldValue = entry['field'];
+      if (typeof fieldValue !== 'string') {
+        return null;
+      }
+
+      return {
+        field: fieldValue,
+        previous: toChangeValue(entry['previous']),
+        current: toChangeValue(entry['current']),
+      };
+    })
+    .filter((entry): entry is ReleaseChangeEntry => Boolean(entry));
+};
 
 const formatUserName = (user: ProjectActivityLogEntry['user']) => {
   if (!user) {
@@ -20,14 +90,16 @@ const formatUserName = (user: ProjectActivityLogEntry['user']) => {
 };
 
 const describeAction = (log: ProjectActivityLogEntry) => {
-  const environment =
-    log.metadata && typeof log.metadata['environment'] === 'string' ? (log.metadata['environment'] as string) : null;
+  const environment = getMetadataString(log.metadata, 'environment');
 
   switch (log.action) {
     case 'project_created':
       return 'Project created';
-    case 'release_upserted':
-      return environment ? `Release updated (${environment})` : 'Release updated';
+    case 'release_upserted': {
+      const isNewRelease = getMetadataBoolean(log.metadata, 'isNewRelease');
+      const actionVerb = isNewRelease ? 'added' : 'updated';
+      return environment ? `Release ${actionVerb} (${environment})` : `Release ${actionVerb}`;
+    }
     case 'release_deleted':
       return environment ? `Release deleted (${environment})` : 'Release deleted';
     default:
@@ -36,7 +108,7 @@ const describeAction = (log: ProjectActivityLogEntry) => {
 };
 
 const buildMetadataChips = (metadata: Record<string, unknown> | null | undefined) => {
-  if (!metadata) {
+  if (!isRecord(metadata)) {
     return [];
   }
 
@@ -60,6 +132,28 @@ const buildMetadataChips = (metadata: Record<string, unknown> | null | undefined
       return null;
     })
     .filter((entry): entry is { label: string; value: string } => Boolean(entry));
+};
+
+const CHANGE_FIELD_LABELS: Record<string, string> = {
+  environment: 'Environment',
+  branch: 'Branch',
+  version: 'Version',
+  build: 'Build',
+  date: 'Date',
+  commitMessage: 'Commit',
+};
+
+const formatChangeValue = (value: string | number | null) => {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? truncate(trimmed, 90) : '—';
 };
 
 export const ProjectActivityList = ({ summary }: ProjectActivityListProps) => (
@@ -87,6 +181,7 @@ export const ProjectActivityList = ({ summary }: ProjectActivityListProps) => (
       <ol className={styles.timeline}>
         {summary.recentLogs.map((log) => {
           const chips = buildMetadataChips(log.metadata);
+          const changes = getReleaseChanges(log.metadata);
           return (
             <li key={log.id} className={styles.timelineItem}>
               <div className={styles.timelineContent}>
@@ -101,6 +196,27 @@ export const ProjectActivityList = ({ summary }: ProjectActivityListProps) => (
                         {chip.label}: {chip.value}
                       </span>
                     ))}
+                  </div>
+                )}
+                {changes.length > 0 && (
+                  <div className={styles.changeBlock}>
+                    <p className={styles.changeBlockTitle}>Changed fields</p>
+                    <ul className={styles.changeList}>
+                      {changes.map((change) => (
+                        <li key={`${log.id}-${change.field}`} className={styles.changeItem}>
+                          <span className={styles.changeField}>
+                            {CHANGE_FIELD_LABELS[change.field] ?? change.field}
+                          </span>
+                          <span className={styles.changeValue}>{formatChangeValue(change.previous)}</span>
+                          <span className={styles.changeArrow} aria-hidden="true">
+                            →
+                          </span>
+                          <span className={`${styles.changeValue} ${styles.changeValueNew}`}>
+                            {formatChangeValue(change.current)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
