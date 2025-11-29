@@ -45,6 +45,8 @@ export class ReleasesService {
     const environment = normalizeKey(dto.environment);
 
     const project = await this.projectsService.ensureProjectForUser(userId, dto.client);
+    const normalizedCommitMessage = this.normalizeCommitMessage(dto.commitMessage);
+    const commitMessageProvided = dto.commitMessage !== undefined;
 
     let release = await this.releasesRepository.findOne({
       where: { projectId: project.id, environment },
@@ -59,6 +61,7 @@ export class ReleasesService {
         version: dto.version,
         build: dto.build,
         date: dto.date,
+        commitMessage: commitMessageProvided ? normalizedCommitMessage : null,
       });
     } else {
       release.branch = dto.branch;
@@ -66,6 +69,9 @@ export class ReleasesService {
       release.build = dto.build;
       release.date = dto.date;
       release.client = client;
+      if (commitMessageProvided) {
+        release.commitMessage = normalizedCommitMessage;
+      }
     }
 
     await this.releasesRepository.save(release);
@@ -76,6 +82,7 @@ export class ReleasesService {
       version: release.version,
       build: release.build,
       date: release.date,
+      commitMessage: release.commitMessage,
     });
     return this.getReleasesForUser(userId);
   }
@@ -109,6 +116,7 @@ export class ReleasesService {
       version: release.version,
       build: release.build,
       date: release.date,
+      commitMessage: release.commitMessage,
     };
 
     await this.releasesRepository.remove(release);
@@ -122,6 +130,16 @@ export class ReleasesService {
       version: release.version,
       build: release.build,
       date: release.date,
+      commitMessage: release.commitMessage ?? null,
     };
+  }
+
+  private normalizeCommitMessage(value?: string | null): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
   }
 }

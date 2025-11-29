@@ -19,6 +19,7 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
   const [build, setBuild] = useState(String(initialData?.release.build ?? 1));
   const [date, setDate] = useState(initialData?.release.date ?? today());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commitMessage, setCommitMessage] = useState(initialData?.release.commitMessage ?? '');
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,6 +36,7 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
         version,
         build: Number(build) || 1,
         date,
+        commitMessage: commitMessage.trim() ? commitMessage.trim() : null,
       });
     } finally {
       setIsSubmitting(false);
@@ -118,6 +120,21 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
           Release date
         </label>
         <input id="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+      </div>
+
+      <div>
+        <label className={styles.label} htmlFor="commitMessage">
+          Commit message
+        </label>
+        <textarea
+          id="commitMessage"
+          rows={3}
+          value={commitMessage}
+          onChange={(event) => setCommitMessage(event.target.value)}
+          placeholder="Share context for your teammates"
+          maxLength={500}
+        />
+        <p className={styles.helperText}>Optional, but helps others understand what shipped.</p>
       </div>
 
       <div className={styles.actions}>

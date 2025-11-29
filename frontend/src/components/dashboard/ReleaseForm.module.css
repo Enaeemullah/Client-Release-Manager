@@ -31,6 +31,12 @@
   justify-content: center;
 }
 
+.helperText {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--verto-muted);
+}
+
 @media (max-width: 540px) {
   .row {
     flex-direction: column;

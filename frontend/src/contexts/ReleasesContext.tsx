@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Release, ReleasesData } from '../types/releases';
 import { useAuth } from './AuthContext';
-import { downloadJson } from '../utils/download';
+import { downloadExcel } from '../utils/download';
 import {
   deleteRelease as deleteReleaseRequest,
   fetchReleases,
@@ -11,6 +11,7 @@ import {
   upsertRelease as upsertReleaseRequest,
 } from '../services/api';
 import { ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
+import { flattenReleases } from '../utils/releases';
 
 interface ReleasesContextValue {
   releases: ReleasesData;
@@ -144,7 +145,27 @@ export const ReleasesProvider = ({ children }: ReleasesProviderProps) => {
     }
 
     const identifier = currentUser.email.split('@')[0] || 'verto-user';
-    downloadJson(releases, `releases-${identifier}-${new Date().toISOString().split('T')[0]}.json`);
+    const rows = flattenReleases(releases).map((row) => ({
+      Client: row.client,
+      Environment: row.env,
+      Branch: row.branch,
+      Version: row.version,
+      Build: row.build,
+      Date: row.date,
+      'Commit Message': row.commitMessage ?? '',
+    }));
+
+    const filename = `releases-${identifier}-${new Date().toISOString().split('T')[0]}.xlsx`;
+    downloadExcel(
+      [
+        {
+          name: 'Releases',
+          rows,
+          header: ['Client', 'Environment', 'Branch', 'Version', 'Build', 'Date', 'Commit Message'],
+        },
+      ],
+      filename,
+    );
   }, [currentUser, releases]);
 
   const value = useMemo(

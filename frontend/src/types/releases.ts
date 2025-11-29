@@ -3,6 +3,7 @@ export interface Release {
   version: string;
   build: number;
   date: string;
+  commitMessage?: string | null;
 }
 
 export type ClientReleases = Record<string, Release>;

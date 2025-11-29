@@ -8,6 +8,8 @@ interface ProjectActivityListProps {
 const formatTimestamp = (isoDate: string) =>
   new Date(isoDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
+const truncate = (value: string, limit = 80) => (value.length > limit ? `${value.slice(0, limit - 1)}…` : value);
+
 const formatUserName = (user: ProjectActivityLogEntry['user']) => {
   if (!user) {
     return 'System';
@@ -44,13 +46,16 @@ const buildMetadataChips = (metadata: Record<string, unknown> | null | undefined
     { key: 'version', label: 'Version' },
     { key: 'build', label: 'Build' },
     { key: 'date', label: 'Date' },
+    { key: 'commitMessage', label: 'Commit' },
   ];
 
   return fields
     .map(({ key, label }) => {
       const value = metadata[key];
       if (typeof value === 'string' || typeof value === 'number') {
-        return { label, value: String(value) };
+        const normalizedValue =
+          key === 'commitMessage' && typeof value === 'string' ? truncate(value, 90) : String(value);
+        return { label, value: normalizedValue };
       }
       return null;
     })
@@ -64,7 +69,7 @@ export const ProjectActivityList = ({ summary }: ProjectActivityListProps) => (
         <p className={styles.projectName}>{summary.name}</p>
         <p className={styles.projectSlug}>{summary.slug}</p>
       </div>
-      <div className={styles.statusBlock}>
+      <div className={`${styles.statusBlock} ${summary.lastUpdatedAt ? styles.statusBlockHighlight : ''}`.trim()}>
         {summary.lastUpdatedAt ? (
           <>
             <span className={styles.statusLabel}>Last updated</span>

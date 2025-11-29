@@ -22,7 +22,8 @@ export const filterReleases = (rows: ReleaseRow[], rawTerm: string) => {
     row.client.toLowerCase().includes(term) ||
     row.env.toLowerCase().includes(term) ||
     row.branch.toLowerCase().includes(term) ||
-    row.version.toLowerCase().includes(term)
+    row.version.toLowerCase().includes(term) ||
+    (row.commitMessage ? row.commitMessage.toLowerCase().includes(term) : false)
   );
 };
 

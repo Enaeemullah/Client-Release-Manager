@@ -31,6 +31,9 @@ export class Release {
   @Column({ type: 'date' })
   date: string;
 
+  @Column({ type: 'text', nullable: true })
+  commitMessage: string | null;
+
   @ManyToOne(() => Project, (project) => project.releases, {
     onDelete: 'CASCADE',
   })

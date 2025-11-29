@@ -119,6 +119,7 @@ export const Dashboard = () => {
           version: editTarget.version,
           build: editTarget.build,
           date: editTarget.date,
+          commitMessage: editTarget.commitMessage ?? '',
         } as Release,
       }
     : null;

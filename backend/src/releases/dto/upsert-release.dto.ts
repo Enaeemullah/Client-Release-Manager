@@ -2,8 +2,10 @@ import {
   IsDateString,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsPositive,
   IsString,
+  MaxLength,
 } from 'class-validator';
 
 export class UpsertReleaseDto {
@@ -29,4 +31,9 @@ export class UpsertReleaseDto {
 
   @IsDateString()
   date: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  commitMessage?: string | null;
 }
