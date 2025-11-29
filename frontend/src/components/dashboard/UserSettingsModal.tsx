@@ -16,6 +16,8 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
   const avatarInputId = useId();
 
   const [profileFields, setProfileFields] = useState({
+    firstName: '',
+    lastName: '',
     displayName: '',
     jobTitle: '',
     location: '',
@@ -38,6 +40,8 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
     }
 
     setProfileFields({
+      firstName: currentUser.firstName ?? '',
+      lastName: currentUser.lastName ?? '',
       displayName: currentUser.displayName ?? '',
       jobTitle: currentUser.jobTitle ?? '',
       location: currentUser.location ?? '',
@@ -58,7 +62,10 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
       return '';
     }
 
-    const source = currentUser.displayName || currentUser.email;
+    const source =
+      currentUser.displayName ||
+      [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') ||
+      currentUser.email;
     return source
       .split(' ')
       .map((part) => part.charAt(0))
@@ -122,6 +129,8 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
     try {
       const payload: UpdateProfilePayload = {
         displayName: toNullable(profileFields.displayName),
+        firstName: toNullable(profileFields.firstName),
+        lastName: toNullable(profileFields.lastName),
         jobTitle: toNullable(profileFields.jobTitle),
         location: toNullable(profileFields.location),
         phoneNumber: toNullable(profileFields.phoneNumber),
@@ -137,6 +146,8 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
       setAvatarPreview(updated.avatarUrl ?? null);
       setAvatarPayload(undefined);
       setProfileFields({
+        firstName: updated.firstName ?? '',
+        lastName: updated.lastName ?? '',
         displayName: updated.displayName ?? '',
         jobTitle: updated.jobTitle ?? '',
         location: updated.location ?? '',
@@ -237,6 +248,28 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
             <label className={styles.field}>
               <span>Email</span>
               <input type="email" value={currentUser.email} disabled />
+            </label>
+
+            <label className={styles.field}>
+              <span>First name</span>
+              <input
+                type="text"
+                name="firstName"
+                value={profileFields.firstName}
+                onChange={handleProfileFieldChange}
+                placeholder="Alex"
+              />
+            </label>
+
+            <label className={styles.field}>
+              <span>Last name</span>
+              <input
+                type="text"
+                name="lastName"
+                value={profileFields.lastName}
+                onChange={handleProfileFieldChange}
+                placeholder="Chen"
+              />
             </label>
 
             <label className={styles.field}>

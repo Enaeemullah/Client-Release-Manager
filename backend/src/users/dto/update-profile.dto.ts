@@ -8,6 +8,16 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
+  firstName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  lastName?: string | null;
+
+  @IsOptional()
+  @IsString()
   avatarUrl?: string | null;
 
   @IsOptional()

@@ -42,6 +42,8 @@ export const getStoredSession = (): StoredSession | null => {
       user: {
         id: 'legacy-user',
         email: legacyEmail,
+        firstName: null,
+        lastName: null,
         displayName: legacyEmail,
         avatarUrl: null,
         jobTitle: null,

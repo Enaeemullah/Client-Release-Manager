@@ -9,6 +9,13 @@ interface AuthResponse {
   user: UserProfile;
 }
 
+export interface SignupPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface InviteDetails {
   email: string;
   projectName: string;
@@ -74,12 +81,12 @@ const request = async <T>(path: string, options: RequestInit = {}, token?: strin
   return payload as T;
 };
 
-export const signupRequest = (email: string, password: string) =>
+export const signupRequest = (payload: SignupPayload) =>
   request<AuthResponse>(
     '/auth/signup',
     {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(payload),
     },
     undefined
   );
@@ -147,6 +154,8 @@ export const fetchCurrentUser = (token: string) => request<UserProfile>('/users/
 
 export interface UpdateProfilePayload {
   displayName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   avatarUrl?: string | null;
   jobTitle?: string | null;
   location?: string | null;

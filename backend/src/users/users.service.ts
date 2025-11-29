@@ -9,6 +9,8 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 export interface UserProfile {
   id: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
   displayName: string | null;
   avatarUrl: string | null;
   jobTitle: string | null;
@@ -32,11 +34,22 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
-  async create(email: string, passwordHash: string) {
-    const defaultDisplayName = email.includes('@') ? email.split('@')[0] : email;
+  async create(
+    email: string,
+    passwordHash: string,
+    options?: {
+      firstName?: string | null;
+      lastName?: string | null;
+    },
+  ) {
+    const normalizedFirstName = this.normalizeString(options?.firstName ?? null);
+    const normalizedLastName = this.normalizeString(options?.lastName ?? null);
+    const defaultDisplayName = this.buildDisplayName(normalizedFirstName, normalizedLastName, email);
     const user = this.usersRepository.create({
       email,
       passwordHash,
+      firstName: normalizedFirstName ?? null,
+      lastName: normalizedLastName ?? null,
       displayName: defaultDisplayName,
     });
 
@@ -62,6 +75,14 @@ export class UsersService {
 
     if (dto.displayName !== undefined) {
       user.displayName = this.normalizeString(dto.displayName);
+    }
+
+    if (dto.firstName !== undefined) {
+      user.firstName = this.normalizeString(dto.firstName);
+    }
+
+    if (dto.lastName !== undefined) {
+      user.lastName = this.normalizeString(dto.lastName);
     }
 
     if (dto.avatarUrl !== undefined) {
@@ -107,10 +128,12 @@ export class UsersService {
   }
 
   toProfile(user: User): UserProfile {
-    const { id, email, displayName, avatarUrl, jobTitle, location, bio, phoneNumber } = user;
+    const { id, email, firstName, lastName, displayName, avatarUrl, jobTitle, location, bio, phoneNumber } = user;
     return {
       id,
       email,
+      firstName: firstName ?? null,
+      lastName: lastName ?? null,
       displayName: displayName ?? null,
       avatarUrl: avatarUrl ?? null,
       jobTitle: jobTitle ?? null,
@@ -120,12 +143,22 @@ export class UsersService {
     };
   }
 
-  private normalizeString(value?: string | null) {
-    if (value === undefined) {
-      return undefined;
+  private buildDisplayName(firstName?: string | null, lastName?: string | null, fallbackEmail?: string) {
+    const parts = [firstName, lastName].filter((value): value is string => Boolean(value && value.trim()));
+
+    if (parts.length) {
+      return parts.map((value) => value.trim()).join(' ');
     }
 
-    if (value === null) {
+    if (!fallbackEmail) {
+      return null;
+    }
+
+    return fallbackEmail.includes('@') ? fallbackEmail.split('@')[0] : fallbackEmail;
+  }
+
+  private normalizeString(value?: string | null) {
+    if (value === undefined || value === null) {
       return null;
     }
 
