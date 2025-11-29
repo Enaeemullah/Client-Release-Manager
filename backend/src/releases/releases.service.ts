@@ -11,6 +11,17 @@ import { UsersService } from '../users/users.service';
 import { User } from '../users/user.entity';
 import { formatReleaseDate } from 'src/utils/date.utils';
 
+const RELEASE_CHANGE_FIELDS = ['branch', 'version', 'build', 'date', 'commitMessage'] as const;
+type ReleaseChangeField = (typeof RELEASE_CHANGE_FIELDS)[number];
+type ReleaseSnapshot = Pick<Release, 'branch' | 'version' | 'build' | 'date'> & { commitMessage: string | null };
+type ReleaseChangeValue = ReleaseSnapshot[ReleaseChangeField];
+
+interface ReleaseChange {
+  field: ReleaseChangeField;
+  previous: ReleaseChangeValue;
+  current: ReleaseChangeValue;
+}
+
 @Injectable()
 export class ReleasesService {
   constructor(
@@ -58,6 +69,8 @@ export class ReleasesService {
       where: { projectId: project.id, environment },
     });
 
+    const previousSnapshot = release ? this.captureReleaseSnapshot(release) : null;
+
     const isNewRelease = !release;
 
     if (!release) {
@@ -83,15 +96,17 @@ export class ReleasesService {
     }
 
     await this.releasesRepository.save(release);
-    await this.projectsService.recordActivity(project.id, userId, 'release_upserted', {
+
+    const currentSnapshot = this.captureReleaseSnapshot(release);
+    const changes = this.buildReleaseChanges(previousSnapshot, currentSnapshot);
+    const metadata = this.buildReleaseActivityMetadata({
       environment,
-      releaseId: release.id,
-      branch: release.branch,
-      version: release.version,
-      build: release.build,
-      date: release.date,
-      commitMessage: release.commitMessage,
+      release,
+      changes,
+      isNewRelease,
     });
+
+    await this.projectsService.recordActivity(project.id, userId, 'release_upserted', metadata);
     await this.notifyCollaboratorsOfReleaseUpdate({
       project,
       release,
@@ -220,5 +235,61 @@ export class ReleasesService {
     }
 
     return user.email;
+  }
+
+  private captureReleaseSnapshot(release: Release): ReleaseSnapshot {
+    return {
+      branch: release.branch,
+      version: release.version,
+      build: release.build,
+      date: release.date,
+      commitMessage: release.commitMessage ?? null,
+    };
+  }
+
+  private buildReleaseChanges(previous: ReleaseSnapshot | null, current: ReleaseSnapshot): ReleaseChange[] {
+    if (!previous) {
+      return [];
+    }
+
+    return RELEASE_CHANGE_FIELDS.map((field) => {
+      const before = previous[field];
+      const after = current[field];
+
+      if (before === after) {
+        return null;
+      }
+
+      return {
+        field,
+        previous: before ?? null,
+        current: after ?? null,
+      };
+    }).filter((change): change is ReleaseChange => Boolean(change));
+  }
+
+  private buildReleaseActivityMetadata(options: {
+    environment: string;
+    release: Release;
+    changes: ReleaseChange[];
+    isNewRelease: boolean;
+  }): Record<string, unknown> {
+    const metadata: Record<string, unknown> = {
+      client: options.release.client,
+      environment: options.environment,
+      releaseId: options.release.id,
+      branch: options.release.branch,
+      version: options.release.version,
+      build: options.release.build,
+      date: options.release.date,
+      commitMessage: options.release.commitMessage ?? null,
+      isNewRelease: options.isNewRelease,
+    };
+
+    if (options.changes.length > 0) {
+      metadata.changes = options.changes;
+    }
+
+    return metadata;
   }
 }
