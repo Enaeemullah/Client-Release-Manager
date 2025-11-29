@@ -17,6 +17,12 @@
   margin-bottom: 2.5rem;
 }
 
+.logo {
+  height: 80px;
+  width: auto;
+  display: block;
+}
+
 .titleBlock h1 {
   font-size: 2rem;
   font-weight: 400;

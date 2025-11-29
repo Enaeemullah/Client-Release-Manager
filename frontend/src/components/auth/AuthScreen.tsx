@@ -58,7 +58,7 @@ export const AuthScreen = () => {
   return (
     <section className={styles.wrapper}>
       <div className={styles.panel}>
-        <h1 className={styles.title}>Verto</h1>
+        <img src="/verto.svg" alt="Verto Logo" className={styles.logo} />
         <p className={styles.subtitle}>
           {mode === 'login' ? 'Sign in to your release cockpit' : 'Create your Verto workspace'}
         </p>

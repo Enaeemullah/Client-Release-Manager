@@ -134,7 +134,7 @@ export const Dashboard = () => {
       <div className={styles.inner}>
         <header className={styles.header}>
           <div className={styles.titleBlock}>
-            <p className={styles.badge}>Verto</p>
+            <img src="/verto.svg" alt="Verto Logo" className={styles.logo} />
             <h1>Releases without the release anxiety.</h1>
             <p>Track every client environment, unblock product launches, and keep your go-to-market teams aligned.</p>
           </div>

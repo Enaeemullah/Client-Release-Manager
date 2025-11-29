@@ -13,7 +13,12 @@
   border: 1px solid var(--verto-panel-border);
   padding: 2.5rem;
 }
-
+.logo {
+  height: 60px;
+  width: auto;
+  display: block;
+   margin: 0 auto 12px auto;
+}
 .title {
   font-size: 1.5rem;
   font-weight: 300;
