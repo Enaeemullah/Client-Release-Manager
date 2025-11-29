@@ -9,6 +9,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { EmailService } from '../email/email.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/user.entity';
+import { formatReleaseDate } from 'src/utils/date.utils';
 
 @Injectable()
 export class ReleasesService {
@@ -180,10 +181,7 @@ export class ReleasesService {
 
     const actorName = this.buildUserDisplayName(actor);
     const actorEmail = actor?.email ?? 'unknown';
-    const releaseDate =
-      options.release.date instanceof Date
-        ? options.release.date.toISOString().split('T')[0]
-        : options.release.date;
+    const releaseDate = formatReleaseDate(options.release.date) ?? '';
 
     await Promise.all(
       recipients.map((recipient) =>
