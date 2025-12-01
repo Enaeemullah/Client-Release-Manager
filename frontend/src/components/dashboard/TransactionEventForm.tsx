@@ -86,7 +86,7 @@ export const TransactionEventForm = ({
 
       <div>
         <label className={styles.label} htmlFor="transaction-code">
-          PET event code
+         Event Code
         </label>
         <input
           id="transaction-code"
@@ -99,7 +99,7 @@ export const TransactionEventForm = ({
 
       <div>
         <label className={styles.label} htmlFor="transaction-description">
-          PET event description
+          Event Description
         </label>
         <textarea
           id="transaction-description"
