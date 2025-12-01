@@ -25,15 +25,15 @@ export const TransactionEventForm = ({
   onCancel,
 }: TransactionEventFormProps) => {
   const [client, setClient] = useState(initialValues?.client ?? projects[0]?.slug ?? '');
-  const [code, setCode] = useState(initialValues?.code ?? '');
-  const [description, setDescription] = useState(initialValues?.description ?? '');
+  const [petEventCode, setPetEventCode] = useState(initialValues?.petEventCode ?? '');
+  const [petEventDesc, setPetEventDesc] = useState(initialValues?.petEventDesc ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialValues) {
       setClient(initialValues.client);
-      setCode(initialValues.code);
-      setDescription(initialValues.description);
+      setPetEventCode(initialValues.petEventCode);
+      setPetEventDesc(initialValues.petEventDesc);
     }
   }, [initialValues]);
 
@@ -46,13 +46,13 @@ export const TransactionEventForm = ({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!client || !code.trim() || !description.trim()) {
+    if (!client || !petEventCode.trim() || !petEventDesc.trim()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ client, code: code.trim(), description: description.trim() });
+      await onSubmit({ client, petEventCode: petEventCode.trim(), petEventDesc: petEventDesc.trim() });
     } finally {
       setIsSubmitting(false);
     }
@@ -60,7 +60,7 @@ export const TransactionEventForm = ({
 
   const hasProjects = projects.length > 0;
   const buttonLabel = submitLabel ?? (initialValues ? 'Save changes' : 'Add transaction event');
-  const isSubmitDisabled = !hasProjects || !client || !code.trim() || !description.trim() || isSubmitting;
+  const isSubmitDisabled = !hasProjects || !client || !petEventCode.trim() || !petEventDesc.trim() || isSubmitting;
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
@@ -86,20 +86,26 @@ export const TransactionEventForm = ({
 
       <div>
         <label className={styles.label} htmlFor="transaction-code">
-          Transaction Event
+          PET event code
         </label>
-        <input id="transaction-code" type="text" value={code} onChange={(event) => setCode(event.target.value)} placeholder="TRX-001" />
+        <input
+          id="transaction-code"
+          type="text"
+          value={petEventCode}
+          onChange={(event) => setPetEventCode(event.target.value)}
+          placeholder="TRX-001"
+        />
       </div>
 
       <div>
         <label className={styles.label} htmlFor="transaction-description">
-          Description
+          PET event description
         </label>
         <textarea
           id="transaction-description"
           rows={4}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          value={petEventDesc}
+          onChange={(event) => setPetEventDesc(event.target.value)}
           placeholder="Outline what this transaction event represents for the project"
         />
       </div>

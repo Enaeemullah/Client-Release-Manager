@@ -3,8 +3,8 @@ export interface TransactionEventPayload {
   client: string;
   projectId: string;
   projectName: string;
-  code: string;
-  description: string;
+  petEventCode: string;
+  petEventDesc: string;
   createdAt: string;
   updatedAt: string;
 }

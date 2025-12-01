@@ -3,8 +3,8 @@ export interface TransactionEvent {
   client: string;
   projectId: string;
   projectName: string;
-  code: string;
-  description: string;
+  petEventCode: string;
+  petEventDesc: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -13,6 +13,6 @@ export type TransactionEventsByClient = Record<string, TransactionEvent[]>;
 
 export interface TransactionEventInput {
   client: string;
-  code: string;
-  description: string;
+  petEventCode: string;
+  petEventDesc: string;
 }

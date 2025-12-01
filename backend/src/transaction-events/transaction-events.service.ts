@@ -26,7 +26,7 @@ export class TransactionEventsService {
     const events = await this.transactionEventsRepository.find({
       where: { projectId: In(projectIds) },
       relations: { project: true },
-      order: { code: 'ASC' },
+      order: { petEventCode: 'ASC' },
     });
 
     return events.reduce<TransactionEventsResponse>((acc, event) => {
@@ -46,7 +46,7 @@ export class TransactionEventsService {
 
   async createTransactionEvent(userId: string, dto: CreateTransactionEventDto): Promise<TransactionEventsResponse> {
     const normalizedClient = normalizeKey(dto.client);
-    const normalizedCode = normalizeKey(dto.code);
+    const normalizedCode = normalizeKey(dto.petEventCode);
 
     const existing = await this.transactionEventsRepository.findOne({
       where: { codeKey: normalizedCode },
@@ -64,16 +64,16 @@ export class TransactionEventsService {
 
     const event = this.transactionEventsRepository.create({
       projectId: project.id,
-      code: dto.code.trim(),
+      petEventCode: dto.petEventCode.trim(),
       codeKey: normalizedCode,
-      description: dto.description.trim(),
+      petEventDesc: dto.petEventDesc.trim(),
     });
 
     await this.transactionEventsRepository.save(event);
 
     await this.projectsService.recordActivity(project.id, userId, 'transaction_event_created', {
       transactionId: event.id,
-      code: event.code,
+      petEventCode: event.petEventCode,
     });
 
     return this.getEventsForUser(userId);
@@ -98,7 +98,7 @@ export class TransactionEventsService {
       throw new ForbiddenException('You do not have access to this transaction event');
     }
 
-    const normalizedCode = normalizeKey(dto.code);
+    const normalizedCode = normalizeKey(dto.petEventCode);
     if (normalizedCode !== event.codeKey) {
       const conflict = await this.transactionEventsRepository.findOne({
         where: { codeKey: normalizedCode },
@@ -123,14 +123,14 @@ export class TransactionEventsService {
       event.project = targetProject;
     }
 
-    event.code = dto.code.trim();
-    event.description = dto.description.trim();
+    event.petEventCode = dto.petEventCode.trim();
+    event.petEventDesc = dto.petEventDesc.trim();
 
     await this.transactionEventsRepository.save(event);
 
     await this.projectsService.recordActivity(event.projectId, userId, 'transaction_event_updated', {
       transactionId: event.id,
-      code: event.code,
+      petEventCode: event.petEventCode,
     });
 
     return this.getEventsForUser(userId);
@@ -142,8 +142,8 @@ export class TransactionEventsService {
       client: event.project.slug,
       projectId: event.projectId,
       projectName: event.project.name,
-      code: event.code,
-      description: event.description,
+      petEventCode: event.petEventCode,
+      petEventDesc: event.petEventDesc,
       createdAt: event.createdAt.toISOString(),
       updatedAt: event.updatedAt.toISOString(),
     };

@@ -5,7 +5,7 @@ import { createTransactionEventRequest, fetchTransactionEvents, updateTransactio
 
 interface TransactionsContextValue {
   events: TransactionEventsByClient;
-  addEvent: (client: string, code: string, description: string) => Promise<void>;
+  addEvent: (client: string, petEventCode: string, petEventDesc: string) => Promise<void>;
   updateEvent: (eventId: string, values: TransactionEventInput) => Promise<void>;
   reload: () => Promise<void>;
 }
@@ -72,9 +72,9 @@ export const TransactionsProvider = ({ children }: TransactionsProviderProps) =>
   }, [loadEvents]);
 
   const addEvent = useCallback(
-    async (client: string, code: string, description: string) => {
+    async (client: string, petEventCode: string, petEventDesc: string) => {
       const authToken = ensureToken();
-      const data = await createTransactionEventRequest(authToken, { client, code, description });
+      const data = await createTransactionEventRequest(authToken, { client, petEventCode, petEventDesc });
       setEvents(data);
     },
     [ensureToken],

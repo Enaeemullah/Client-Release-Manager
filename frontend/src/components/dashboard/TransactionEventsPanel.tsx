@@ -94,8 +94,8 @@ export const TransactionEventsPanel = ({
                   {clientEvents.map((event) => (
                     <li key={event.id} className={styles.eventRow}>
                       <div className={styles.eventMain}>
-                        <span className={styles.codeBadge}>{event.code}</span>
-                        <p className={styles.eventDescription}>{event.description}</p>
+                        <span className={styles.codeBadge}>{event.petEventCode}</span>
+                        <p className={styles.eventDescription}>{event.petEventDesc}</p>
                       </div>
                       <div className={styles.eventMetaRow}>
                         <p className={styles.eventMeta}>Created {formatTimestamp(event.createdAt)}</p>
@@ -125,7 +125,7 @@ export const TransactionEventsPanel = ({
           <table className={styles.listTable}>
             <thead>
               <tr>
-                <th>Code</th>
+                <th>PET code</th>
                 <th>Description</th>
                 <th>Project</th>
                 <th>Last updated</th>
@@ -136,9 +136,9 @@ export const TransactionEventsPanel = ({
               {flatEvents.map((event) => (
                 <tr key={event.id}>
                   <td>
-                    <span className={styles.listCode}>{event.code}</span>
+                    <span className={styles.listCode}>{event.petEventCode}</span>
                   </td>
-                  <td>{event.description}</td>
+                  <td>{event.petEventDesc}</td>
                   <td>
                     <div>
                       <div>{event.projectName}</div>

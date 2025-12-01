@@ -8,10 +8,10 @@ export class CreateTransactionEventDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(120)
-  code: string;
+  petEventCode: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)
-  description: string;
+  petEventDesc: string;
 }

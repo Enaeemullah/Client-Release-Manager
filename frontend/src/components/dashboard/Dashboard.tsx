@@ -237,9 +237,9 @@ export const Dashboard = () => {
   );
 
   const handleAddTransactionEvent = useCallback(
-    async ({ client, code, description }: TransactionEventFormValues) => {
+    async ({ client, petEventCode, petEventDesc }: TransactionEventFormValues) => {
       try {
-        await addTransactionEvent(client, code, description);
+        await addTransactionEvent(client, petEventCode, petEventDesc);
         setTransactionModalOpen(false);
         toast.success('Transaction event added.');
       } catch (error) {
@@ -252,19 +252,19 @@ export const Dashboard = () => {
 
   const handleGenerateScript = useCallback(
     (event: TransactionEvent) => {
-      toast.info(`Script generation for ${event.code} is coming soon.`);
+      toast.info(`Script generation for ${event.petEventCode} is coming soon.`);
     },
     [toast],
   );
 
   const handleUpdateTransactionEvent = useCallback(
-    async ({ client, code, description }: TransactionEventFormValues) => {
+    async ({ client, petEventCode, petEventDesc }: TransactionEventFormValues) => {
       if (!editTransactionEvent) {
         return;
       }
 
       try {
-        await updateTransactionEvent(editTransactionEvent.id, { client, code, description });
+        await updateTransactionEvent(editTransactionEvent.id, { client, petEventCode, petEventDesc });
         setEditTransactionEvent(null);
         toast.success('Transaction event updated.');
       } catch (error) {
@@ -543,7 +543,7 @@ export const Dashboard = () => {
       </Modal>
 
       <Modal
-        title={viewTransactionEvent ? `Transaction ${viewTransactionEvent.code}` : 'Transaction event'}
+        title={viewTransactionEvent ? `Transaction ${viewTransactionEvent.petEventCode}` : 'Transaction event'}
         isOpen={Boolean(viewTransactionEvent)}
         onClose={() => setViewTransactionEvent(null)}
       >
@@ -553,10 +553,10 @@ export const Dashboard = () => {
               <strong>Project:</strong> {viewTransactionEvent.projectName} ({viewTransactionEvent.client})
             </p>
             <p>
-              <strong>Code:</strong> {viewTransactionEvent.code}
+              <strong>PET code:</strong> {viewTransactionEvent.petEventCode}
             </p>
             <p>
-              <strong>Description:</strong> {viewTransactionEvent.description}
+              <strong>Description:</strong> {viewTransactionEvent.petEventDesc}
             </p>
             <p>
               <strong>Created:</strong> {new Date(viewTransactionEvent.createdAt).toLocaleString()}
@@ -574,8 +574,8 @@ export const Dashboard = () => {
             projects={projectOptions}
             initialValues={{
               client: editTransactionEvent.client,
-              code: editTransactionEvent.code,
-              description: editTransactionEvent.description,
+              petEventCode: editTransactionEvent.petEventCode,
+              petEventDesc: editTransactionEvent.petEventDesc,
             }}
             submitLabel="Save changes"
             onSubmit={handleUpdateTransactionEvent}

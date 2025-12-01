@@ -7,14 +7,14 @@ export class TransactionEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  code: string;
+  @Column({ name: 'code' })
+  petEventCode: string;
 
   @Column()
   codeKey: string;
 
-  @Column({ type: 'text' })
-  description: string;
+  @Column({ type: 'text', name: 'description' })
+  petEventDesc: string;
 
   @ManyToOne(() => Project, (project) => project.transactionEvents, {
     onDelete: 'CASCADE',
