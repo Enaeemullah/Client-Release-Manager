@@ -2,7 +2,7 @@ import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedCol
 import { Project } from '../projects/project.entity';
 
 @Entity('transaction_events')
-@Index(['codeKey'], { unique: true })
+@Index(['projectId', 'codeKey'], { unique: true })
 export class TransactionEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
