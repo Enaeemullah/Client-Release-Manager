@@ -7,11 +7,25 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ReleasesModule } from './releases/releases.module';
 import { ProjectsModule } from './projects/projects.module';
+import { resolve } from 'node:path';
+
+const envFilePath = (() => {
+  const env = process.env.NODE_ENV ?? 'development';
+  const envFileMap: Record<string, string[]> = {
+    development: ['.env-development', '.env'],
+    test: ['.env-test', '.env'],
+    production: ['.env'],
+  };
+
+  const files = envFileMap[env] ?? envFileMap.development;
+  return files.map((file) => resolve(__dirname, '..', file));
+})();
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath,
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

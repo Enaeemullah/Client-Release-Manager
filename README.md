@@ -18,11 +18,17 @@ Verto is a full-stack release tracker built with React + Vite on the frontend an
 
 2. Configure environment variables
 
+   The backend now looks for three `.env*` files:
+
+   - `backend/.env` – production defaults (gitignored). Copy `backend/.env.example` and fill in real secrets.
+   - `backend/.env-development` – used whenever `NODE_ENV` is unset or `development`. Update this file for local dev.
+   - `backend/.env-test` – used when `NODE_ENV=test`, e.g., during Jest/e2e runs.
+
    ```bash
-   cp backend/.env.example backend/.env   # update DB credentials + secrets + SMTP settings for invites
+   cp backend/.env.example backend/.env   # production / deployment secrets
    ```
 
-   Ensure a MySQL database (default `verto`) exists and the configured user has permissions.
+   Ensure a MySQL database (default `verto`) exists and the configured user has permissions. Create separate schemas (`verto_dev`, `verto_test`) if you keep the dev/test defaults. `NODE_ENV` controls which file loads (defaults to `development`); Jest sets `NODE_ENV=test` automatically, and `NODE_ENV=production npm run start:prod` will read from `.env`.
 
 3. Run the dev servers (in separate terminals)
 
