@@ -36,3 +36,9 @@ export interface PendingProjectInvite {
   };
   invitedBy: ActivityUser | null;
 }
+
+export interface OrganizationSummary {
+  id: string;
+  name: string;
+  code: string;
+}

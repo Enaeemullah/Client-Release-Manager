@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { normalizeKey } from '../shared/normalize-key';
@@ -6,6 +6,7 @@ import { Project } from './project.entity';
 import { ProjectMember, ProjectRole } from './project-member.entity';
 import { ProjectActivityAction, ProjectActivityLog } from './project-activity-log.entity';
 import { User } from '../users/user.entity';
+import { CreateOrganizationDto } from './dto/create-organization.dto';
 
 const DEFAULT_LOG_LIMIT = 10;
 
@@ -32,6 +33,12 @@ export interface ProjectActivitySummaryDto {
   lastUpdatedAt: string | null;
   lastUpdatedBy: ProjectActivityUserDto | null;
   recentLogs: ProjectActivityLogDto[];
+}
+
+export interface OrganizationSummaryDto {
+  id: string;
+  name: string;
+  code: string;
 }
 
 @Injectable()
@@ -303,6 +310,59 @@ export class ProjectsService {
       displayName: displayName ?? null,
       firstName: firstName ?? null,
       lastName: lastName ?? null,
+    };
+  }
+
+  async getAccessibleOrganizations(userId: string): Promise<OrganizationSummaryDto[]> {
+    const projectIds = await this.getAccessibleProjectIds(userId);
+    if (projectIds.length === 0) {
+      return [];
+    }
+
+    const projects = await this.projectsRepository.find({
+      where: { id: In(projectIds) },
+      order: { name: 'ASC' },
+    });
+
+    return projects.map((project) => this.toOrganizationSummary(project));
+  }
+
+  async createOrganization(userId: string, dto: CreateOrganizationDto): Promise<OrganizationSummaryDto> {
+    const slug = normalizeKey(dto.code);
+    if (!slug) {
+      throw new BadRequestException('Organization code is required.');
+    }
+
+    const name = dto.name.trim();
+    if (!name) {
+      throw new BadRequestException('Organization name is required.');
+    }
+
+    const existing = await this.findAccessibleProjectBySlug(userId, slug);
+    if (existing) {
+      throw new ConflictException('An organization with this code already exists.');
+    }
+
+    const project = this.projectsRepository.create({
+      ownerId: userId,
+      slug,
+      name,
+    });
+
+    const saved = await this.projectsRepository.save(project);
+    await this.ensureMembership(saved.id, userId, 'owner');
+    await this.recordActivity(saved.id, userId, 'project_created', {
+      name: saved.name,
+    });
+
+    return this.toOrganizationSummary(saved);
+  }
+
+  private toOrganizationSummary(project: Project): OrganizationSummaryDto {
+    return {
+      id: project.id,
+      name: project.name,
+      code: project.slug,
     };
   }
 }

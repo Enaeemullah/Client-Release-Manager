@@ -1,7 +1,8 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import styles from './ReleaseForm.module.css';
 import { Release } from '../../types/releases';
 import { normalizeKey } from '../../utils/releases';
+import { useOrganizations } from '../../contexts/OrganizationsContext';
 
 interface ReleaseFormProps {
   initialData?: { client: string; env: string; release: Release };
@@ -12,6 +13,16 @@ interface ReleaseFormProps {
 const today = () => new Date().toISOString().split('T')[0];
 
 export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProps) => {
+  const { organizations, isLoading: isOrganizationsLoading } = useOrganizations();
+  const organizationOptions = useMemo(
+    () =>
+      organizations.map((org) => ({
+        value: org.code,
+        label: org.name,
+        helper: org.code,
+      })),
+    [organizations],
+  );
   const [client, setClient] = useState(initialData?.client ?? '');
   const [env, setEnv] = useState(initialData?.env ?? '');
   const [branch, setBranch] = useState(initialData?.release.branch ?? '');
@@ -21,10 +32,20 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commitMessage, setCommitMessage] = useState(initialData?.release.commitMessage ?? '');
 
+  useEffect(() => {
+    if (initialData) {
+      return;
+    }
+
+    if (!client && organizationOptions.length > 0) {
+      setClient(organizationOptions[0].value);
+    }
+  }, [initialData, organizationOptions, client]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!client || !env || !branch || !version) {
+    if (!client || !env || !branch || !version || organizationOptions.length === 0) {
       return;
     }
 
@@ -44,21 +65,36 @@ export const ReleaseForm = ({ initialData, onSubmit, onCancel }: ReleaseFormProp
   };
 
   const disableIdentityFields = Boolean(initialData);
+  const hasOrganizations = organizationOptions.length > 0;
+  const fallbackOption =
+    initialData && !organizationOptions.some((option) => option.value === initialData.client)
+      ? { value: initialData.client, label: initialData.client, helper: initialData.client }
+      : null;
+  const selectOptions = fallbackOption ? [fallbackOption, ...organizationOptions] : organizationOptions;
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <div>
         <label className={styles.label} htmlFor="client">
-          Client name
+          Organization
         </label>
-        <input
+        <select
           id="client"
-          type="text"
           value={client}
           onChange={(event) => setClient(event.target.value)}
-          placeholder="acme"
-          disabled={disableIdentityFields}
-        />
+          disabled={disableIdentityFields || !hasOrganizations}
+        >
+          {!hasOrganizations && !fallbackOption && <option value="">No organizations available</option>}
+          {selectOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label} ({option.helper})
+            </option>
+          ))}
+        </select>
+        {!hasOrganizations && !fallbackOption && !isOrganizationsLoading && (
+          <p className={styles.helperText}>Add an organization to start tracking releases.</p>
+        )}
+        {isOrganizationsLoading && <p className={styles.helperText}>Loading organizations…</p>}
       </div>
 
       <div>

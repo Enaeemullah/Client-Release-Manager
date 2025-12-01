@@ -6,6 +6,7 @@ import { ProjectInvite } from './project-invite.entity';
 import { ProjectsService } from './projects.service';
 import { ProjectInvitesService } from './project-invites.service';
 import { ProjectsController } from './projects.controller';
+import { OrganizationsController } from './organizations.controller';
 import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email.module';
 import { ProjectActivityLog } from './project-activity-log.entity';
@@ -18,6 +19,6 @@ import { ProjectActivityLog } from './project-activity-log.entity';
   ],
   providers: [ProjectsService, ProjectInvitesService],
   exports: [ProjectsService, ProjectInvitesService],
-  controllers: [ProjectsController],
+  controllers: [ProjectsController, OrganizationsController],
 })
 export class ProjectsModule {}

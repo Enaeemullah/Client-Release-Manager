@@ -1,6 +1,6 @@
 import { Release, ReleasesData } from '../types/releases';
 import { UserProfile } from '../types/user';
-import { PendingProjectInvite, ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
+import { OrganizationSummary, PendingProjectInvite, ProjectActivityMap, ProjectActivitySummary } from '../types/projects';
 import { TransactionEventInput, TransactionEventsByClient } from '../types/transactions';
 
 const DEFAULT_API_URL = 'http://localhost:3000';
@@ -227,3 +227,21 @@ export const fetchProjectActivitySummaries = (token: string) =>
 
 export const fetchProjectActivityDetail = (token: string, client: string) =>
   request<ProjectActivitySummary>(`/projects/${encodeURIComponent(client)}/activity`, { method: 'GET' }, token);
+
+export interface CreateOrganizationPayload {
+  name: string;
+  code: string;
+}
+
+export const fetchOrganizations = (token: string) =>
+  request<OrganizationSummary[]>('/organizations', { method: 'GET' }, token);
+
+export const createOrganizationRequest = (token: string, payload: CreateOrganizationPayload) =>
+  request<OrganizationSummary>(
+    '/organizations',
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+    token
+  );

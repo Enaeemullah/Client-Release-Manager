@@ -24,6 +24,8 @@ import {
   fetchPendingInvites,
   rejectPendingInviteRequest,
 } from '../../services/api';
+import { useOrganizations } from '../../contexts/OrganizationsContext';
+import { AddOrganizationForm } from './AddOrganizationForm';
 
 export const Dashboard = () => {
   const {
@@ -38,6 +40,7 @@ export const Dashboard = () => {
     reloadWorkspace,
   } = useReleases();
   const { currentUser, logout, token } = useAuth();
+  const { organizations, addOrganization } = useOrganizations();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -58,6 +61,7 @@ export const Dashboard = () => {
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
   const [viewTransactionEvent, setViewTransactionEvent] = useState<TransactionEvent | null>(null);
   const [editTransactionEvent, setEditTransactionEvent] = useState<TransactionEvent | null>(null);
+  const [isOrganizationModalOpen, setOrganizationModalOpen] = useState(false);
   const toast = useToast();
   const loadPendingInvites = useCallback(async () => {
     if (!token) {
@@ -134,18 +138,37 @@ export const Dashboard = () => {
   const groupedRows = useMemo(() => Array.from(groupByClient(filteredRows).entries()), [filteredRows]);
   const { events: transactionEvents, addEvent: addTransactionEvent, updateEvent: updateTransactionEvent } = useTransactions();
   const projectOptions = useMemo<ProjectOption[]>(() => {
-    const slugs = new Set<string>();
-    Object.keys(releases).forEach((slug) => slugs.add(slug));
-    Object.keys(activity).forEach((slug) => slugs.add(slug));
-    Object.keys(transactionEvents).forEach((slug) => slugs.add(slug));
+    const labelMap = new Map<string, string>();
 
-    return Array.from(slugs)
-      .map((slug) => ({
+    organizations.forEach((org) => {
+      labelMap.set(org.code, org.name);
+    });
+
+    Object.keys(activity).forEach((slug) => {
+      if (!labelMap.has(slug)) {
+        labelMap.set(slug, activity[slug]?.name ?? slug);
+      }
+    });
+
+    Object.keys(releases).forEach((slug) => {
+      if (!labelMap.has(slug)) {
+        labelMap.set(slug, slug);
+      }
+    });
+
+    Object.keys(transactionEvents).forEach((slug) => {
+      if (!labelMap.has(slug)) {
+        labelMap.set(slug, slug);
+      }
+    });
+
+    return Array.from(labelMap.entries())
+      .map(([slug, label]) => ({
         slug,
-        label: activity[slug]?.name ?? slug,
+        label,
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [releases, activity, transactionEvents]);
+  }, [organizations, releases, activity, transactionEvents]);
 
   const handleAdd = useCallback(
     async (client: string, env: string, release: Release) => {
@@ -195,6 +218,21 @@ export const Dashboard = () => {
       await inviteUser(client, email);
     },
     [inviteUser]
+  );
+
+  const handleAddOrganization = useCallback(
+    async (values: { name: string; code: string }) => {
+      try {
+        await addOrganization(values);
+        await reloadWorkspace();
+        setOrganizationModalOpen(false);
+        toast.success('Organization added.');
+      } catch (error) {
+        console.error(error);
+        toast.error(error instanceof Error ? error.message : 'Unable to add organization.');
+      }
+    },
+    [addOrganization, reloadWorkspace, toast],
   );
 
   const handleAddTransactionEvent = useCallback(
@@ -388,6 +426,9 @@ export const Dashboard = () => {
                 <button className="btn" onClick={() => exportData()}>
                   <DownloadIcon /> Export
                 </button>
+                <button className="btn" onClick={() => setOrganizationModalOpen(true)}>
+                  <PlusIcon /> Add organization
+                </button>
                 <button className="btn btn--filled" onClick={() => setCreateModalOpen(true)}>
                   <PlusIcon /> Add Release
                 </button>
@@ -445,6 +486,10 @@ export const Dashboard = () => {
         {activeEditData && (
           <ReleaseForm initialData={activeEditData} onSubmit={handleEdit} onCancel={() => setEditTarget(null)} />
         )}
+      </Modal>
+
+      <Modal title="Add organization" isOpen={isOrganizationModalOpen} onClose={() => setOrganizationModalOpen(false)}>
+        <AddOrganizationForm onSubmit={handleAddOrganization} onCancel={() => setOrganizationModalOpen(false)} />
       </Modal>
 
       <Modal

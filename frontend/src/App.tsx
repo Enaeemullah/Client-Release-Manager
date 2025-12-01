@@ -3,16 +3,19 @@ import { ReleasesProvider } from './contexts/ReleasesContext';
 import { AppContent } from './components/AppContent';
 import { TransactionsProvider } from './contexts/TransactionsContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { OrganizationsProvider } from './contexts/OrganizationsContext';
 
 const App = () => (
   <AuthProvider>
-    <ReleasesProvider>
-      <TransactionsProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
-      </TransactionsProvider>
-    </ReleasesProvider>
+    <OrganizationsProvider>
+      <ReleasesProvider>
+        <TransactionsProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </TransactionsProvider>
+      </ReleasesProvider>
+    </OrganizationsProvider>
   </AuthProvider>
 );
 

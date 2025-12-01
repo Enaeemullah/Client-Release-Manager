@@ -81,7 +81,7 @@ export const TransactionEventForm = ({
             </option>
           ))}
         </select>
-        {!hasProjects && <p className={styles.helperText}>Add a release to start tracking transaction events.</p>}
+        {!hasProjects && <p className={styles.helperText}>Add an organization to start tracking transaction events.</p>}
       </div>
 
       <div>
