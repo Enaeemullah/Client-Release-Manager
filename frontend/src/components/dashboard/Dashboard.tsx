@@ -26,6 +26,7 @@ import {
 } from '../../services/api';
 import { useOrganizations } from '../../contexts/OrganizationsContext';
 import { AddOrganizationForm } from './AddOrganizationForm';
+import { OrganizationList } from './OrganizationList';
 
 export const Dashboard = () => {
   const {
@@ -40,7 +41,7 @@ export const Dashboard = () => {
     reloadWorkspace,
   } = useReleases();
   const { currentUser, logout, token } = useAuth();
-  const { organizations, addOrganization } = useOrganizations();
+  const { organizations, addOrganization, isLoading: isOrganizationsLoading } = useOrganizations();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -57,7 +58,7 @@ export const Dashboard = () => {
   const [invitesLoading, setInvitesLoading] = useState(false);
   const [invitesError, setInvitesError] = useState<string | null>(null);
   const [inviteAction, setInviteAction] = useState<{ id: string; action: 'accept' | 'reject' } | null>(null);
-  const [activeView, setActiveView] = useState<'releases' | 'transactions'>('releases');
+  const [activeView, setActiveView] = useState<'releases' | 'organizations' | 'transactions'>('releases');
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
   const [viewTransactionEvent, setViewTransactionEvent] = useState<TransactionEvent | null>(null);
   const [editTransactionEvent, setEditTransactionEvent] = useState<TransactionEvent | null>(null);
@@ -409,6 +410,15 @@ export const Dashboard = () => {
           </button>
           <button
             type="button"
+            className={`${styles.viewTabButton} ${activeView === 'organizations' ? styles['viewTabButton--active'] : ''}`.trim()}
+            onClick={() => setActiveView('organizations')}
+            role="tab"
+            aria-selected={activeView === 'organizations'}
+          >
+            Organizations
+          </button>
+          <button
+            type="button"
             className={`${styles.viewTabButton} ${activeView === 'transactions' ? styles['viewTabButton--active'] : ''}`.trim()}
             onClick={() => setActiveView('transactions')}
             role="tab"
@@ -466,6 +476,14 @@ export const Dashboard = () => {
               <div className={styles.emptyState}>No releases found. Add your first release to get started.</div>
             )}
           </>
+        )}
+
+        {activeView === 'organizations' && (
+          <OrganizationList
+            organizations={organizations}
+            isLoading={isOrganizationsLoading}
+            onAddClick={() => setOrganizationModalOpen(true)}
+          />
         )}
 
         {activeView === 'transactions' && (
