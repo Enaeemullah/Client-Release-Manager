@@ -250,6 +250,10 @@ export const Dashboard = () => {
     [addTransactionEvent, toast],
   );
 
+  const handleGenerateScript = useCallback(() => {
+    toast.info('Script generation is coming soon.');
+  }, [toast]);
+
   const handleUpdateTransactionEvent = useCallback(
     async ({ client, code, description }: TransactionEventFormValues) => {
       if (!editTransactionEvent) {
@@ -492,6 +496,7 @@ export const Dashboard = () => {
             onAddClick={() => setTransactionModalOpen(true)}
             onView={setViewTransactionEvent}
             onEdit={setEditTransactionEvent}
+            onGenerateScript={handleGenerateScript}
           />
         )}
       </div>

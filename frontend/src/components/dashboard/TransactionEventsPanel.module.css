@@ -11,6 +11,37 @@
   gap: 1.5rem;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.viewToggle {
+  display: inline-flex;
+  border: 1px solid var(--verto-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.viewToggleButton {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--verto-muted);
+  cursor: pointer;
+}
+
+.viewToggleButton--active {
+  background: var(--verto-black);
+  color: #fff;
+}
+
 .kicker {
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -35,6 +66,57 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1rem;
+}
+
+.listWrapper {
+  border: 1px solid var(--verto-border);
+  border-radius: 1rem;
+  background: #fff;
+  overflow-x: auto;
+}
+
+.listTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.listTable th,
+.listTable td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.listTable th {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  color: var(--verto-muted);
+}
+
+.listCode {
+  font-weight: 600;
+}
+
+.listProject {
+  color: var(--verto-muted);
+  font-size: 0.85rem;
+}
+
+.listActions {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.listActions button {
+  border: 1px solid var(--verto-text);
+  background: #fff;
+  color: var(--verto-text);
+  padding: 0.25rem 0.85rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .card {
@@ -168,5 +250,14 @@
 
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .actions button {
+    flex: 1;
   }
 }
