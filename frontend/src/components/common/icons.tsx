@@ -65,3 +65,30 @@ export const SettingsIcon = () => (
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l0 0a2 2 0 1 1-2.83 2.83l0 0A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-3 0 1.65 1.65 0 0 0-.33 1.82l0 0a2 2 0 1 1-2.83-2.83l0 0A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.82-.33l0 0a2 2 0 1 1-2.83-2.83l0 0A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .33-1.82l0 0a2 2 0 1 1 2.83-2.83l0 0A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 3 0 1.65 1.65 0 0 0 .33-1.82l0 0a2 2 0 1 1 2.83 2.83l0 0A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.82.33l0 0a2 2 0 1 1 2.83 2.83l0 0A1.65 1.65 0 0 0 19.4 15z" />
   </svg>
 );
+
+export const LayersIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polygon points="12 2 3 7 12 12 21 7 12 2" />
+    <polyline points="3 12 12 17 21 12" />
+    <polyline points="3 17 12 22 21 17" />
+  </svg>
+);
+
+export const ActivityIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="3 12 7 12 10 3 14 21 17 12 21 12" />
+  </svg>
+);
+
+export const BuildingIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="7" width="7" height="13" rx="1" />
+    <rect x="14" y="3" width="7" height="17" rx="1" />
+    <path d="M3 21h18" />
+    <path d="M6 10h1" />
+    <path d="M6 14h1" />
+    <path d="M17 6h1" />
+    <path d="M17 10h1" />
+    <path d="M17 14h1" />
+  </svg>
+);
