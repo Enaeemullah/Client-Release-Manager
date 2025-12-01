@@ -222,6 +222,47 @@
   font-weight: 600;
 }
 
+.scriptModal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scriptIntro {
+  margin: 0;
+  color: var(--verto-muted);
+  font-size: 0.9rem;
+}
+
+.scriptBlock {
+  margin: 0;
+  padding: 1rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 0.75rem;
+  border: 1px solid var(--verto-border);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.scriptBlock code {
+  font-family: inherit;
+}
+
+.scriptHint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--verto-muted);
+}
+
+.scriptActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;

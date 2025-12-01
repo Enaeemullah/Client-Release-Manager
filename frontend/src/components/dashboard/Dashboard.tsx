@@ -28,6 +28,26 @@ import { useOrganizations } from '../../contexts/OrganizationsContext';
 import { AddOrganizationForm } from './AddOrganizationForm';
 import { OrganizationList } from './OrganizationList';
 
+const SCRIPT_TARGETS = [
+  { schema: 'deposit', table: 'pr_gn_de_depositevents' },
+  { schema: 'generalledger', table: 'pr_gn_ge_glevents' },
+  { schema: 'loan', table: 'pr_gn_le_loanevents' },
+] as const;
+
+const escapeSqlLiteral = (value: string) => value.replace(/'/g, "''");
+
+const buildTransactionEventScript = (event: TransactionEvent) => {
+  const columns = 'pet_eventcode, pet_eventdesc, system_generated';
+  const petEventCode = escapeSqlLiteral(event.petEventCode);
+  const petEventDesc = escapeSqlLiteral(event.petEventDesc);
+  const systemGenerated = 'N';
+
+  return SCRIPT_TARGETS.map(
+    ({ schema, table }) =>
+      `INSERT INTO ${schema}.\`${table}\` (${columns})\nVALUES ('${petEventCode}', '${petEventDesc}', '${systemGenerated}');`,
+  ).join('\n\n');
+};
+
 export const Dashboard = () => {
   const {
     releases,
@@ -62,6 +82,8 @@ export const Dashboard = () => {
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
   const [viewTransactionEvent, setViewTransactionEvent] = useState<TransactionEvent | null>(null);
   const [editTransactionEvent, setEditTransactionEvent] = useState<TransactionEvent | null>(null);
+  const [scriptEvent, setScriptEvent] = useState<TransactionEvent | null>(null);
+  const [scriptCopyState, setScriptCopyState] = useState<'idle' | 'copied'>('idle');
   const [isOrganizationModalOpen, setOrganizationModalOpen] = useState(false);
   const toast = useToast();
   const loadPendingInvites = useCallback(async () => {
@@ -170,6 +192,7 @@ export const Dashboard = () => {
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [organizations, releases, activity, transactionEvents]);
+  const scriptPreview = useMemo(() => (scriptEvent ? buildTransactionEventScript(scriptEvent) : ''), [scriptEvent]);
 
   const handleAdd = useCallback(
     async (client: string, env: string, release: Release) => {
@@ -250,12 +273,10 @@ export const Dashboard = () => {
     [addTransactionEvent, toast],
   );
 
-  const handleGenerateScript = useCallback(
-    (event: TransactionEvent) => {
-      toast.info(`Script generation for ${event.petEventCode} is coming soon.`);
-    },
-    [toast],
-  );
+  const handleGenerateScript = useCallback((event: TransactionEvent) => {
+    setScriptEvent(event);
+    setScriptCopyState('idle');
+  }, []);
 
   const handleUpdateTransactionEvent = useCallback(
     async ({ client, petEventCode, petEventDesc }: TransactionEventFormValues) => {
@@ -302,6 +323,49 @@ export const Dashboard = () => {
     setActivityError(null);
     setActivityLoading(false);
   };
+
+  const closeScriptModal = useCallback(() => {
+    setScriptEvent(null);
+    setScriptCopyState('idle');
+  }, []);
+
+  const copyScriptToClipboard = useCallback(async () => {
+    if (!scriptPreview) {
+      return;
+    }
+
+    const markCopied = () => {
+      setScriptCopyState('copied');
+      toast.success('Script copied to clipboard.');
+    };
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(scriptPreview);
+        markCopied();
+        return;
+      }
+
+      throw new Error('Clipboard API unavailable');
+    } catch (clipboardError) {
+      console.warn('Clipboard API unavailable, attempting fallback copy.', clipboardError);
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = scriptPreview;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        markCopied();
+      } catch (copyError) {
+        console.error(copyError);
+        toast.error('Unable to copy script.');
+      }
+    }
+  }, [scriptPreview, toast]);
 
   const activeEditData = editTarget
     ? {
@@ -581,6 +645,32 @@ export const Dashboard = () => {
             onSubmit={handleUpdateTransactionEvent}
             onCancel={() => setEditTransactionEvent(null)}
           />
+        )}
+      </Modal>
+
+      <Modal
+        title={scriptEvent ? `Script for ${scriptEvent.petEventCode}` : 'Generated script'}
+        isOpen={Boolean(scriptEvent)}
+        onClose={closeScriptModal}
+      >
+        {scriptEvent && (
+          <div className={styles.scriptModal}>
+            <p className={styles.scriptIntro}>
+              Run these statements in your deposit, general ledger, and loan databases to register this transaction event.
+            </p>
+            <pre className={styles.scriptBlock} aria-label="Generated SQL script">
+              <code>{scriptPreview}</code>
+            </pre>
+            <p className={styles.scriptHint}>
+              The `system_generated` flag defaults to &apos;N&apos;. Update it before running the script if your process requires a
+              different value.
+            </p>
+            <div className={styles.scriptActions}>
+              <button type="button" className="btn" onClick={copyScriptToClipboard}>
+                {scriptCopyState === 'copied' ? 'Copied!' : 'Copy script'}
+              </button>
+            </div>
+          </div>
         )}
       </Modal>
 
