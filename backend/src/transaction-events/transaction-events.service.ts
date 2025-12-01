@@ -7,6 +7,7 @@ import { CreateTransactionEventDto } from './dto/create-transaction-event.dto';
 import { normalizeKey } from '../shared/normalize-key';
 import { TransactionEventPayload, TransactionEventsResponse } from './transaction-events.types';
 import { UpdateTransactionEventDto } from './dto/update-transaction-event.dto';
+import { Project } from '../projects/project.entity';
 
 const PARENT_ORGANIZATION_SLUG = 'mfsys';
 
@@ -68,7 +69,7 @@ export class TransactionEventsService {
     });
     eventsToPersist.push(mainEvent);
 
-    let parentProject = null;
+    let parentProject: Project | null = null;
     let parentEvent: TransactionEvent | null = null;
     if (normalizedClient !== PARENT_ORGANIZATION_SLUG) {
       parentProject = await this.projectsService.findAccessibleProjectBySlug(userId, PARENT_ORGANIZATION_SLUG);
