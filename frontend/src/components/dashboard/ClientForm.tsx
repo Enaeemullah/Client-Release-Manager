@@ -74,7 +74,7 @@ export const ClientForm = ({ initialValues, submitLabel, onSubmit, onCancel }: C
     <form className={styles.form} onSubmit={handleSubmit} data-testid="client-form">
       <div>
         <label className={styles.label} htmlFor="por_orgadesc">
-          Organization name <small>(por_orgadesc)</small>
+          Organization name
         </label>
         <input
           id="por_orgadesc"
@@ -90,7 +90,7 @@ export const ClientForm = ({ initialValues, submitLabel, onSubmit, onCancel }: C
 
       <div>
         <label className={styles.label} htmlFor="por_orgacode">
-          Organization code <small>(por_orgacode)</small>
+          Organization code
         </label>
         <input
           id="por_orgacode"
@@ -106,7 +106,7 @@ export const ClientForm = ({ initialValues, submitLabel, onSubmit, onCancel }: C
 
       <div>
         <label className={styles.label} htmlFor="por_active">
-          Status <small>(por_active)</small>
+          Status
         </label>
         <select
           id="por_active"
